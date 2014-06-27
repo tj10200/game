@@ -1,0 +1,6 @@
+{
+    "aNumber" : 12345,
+    "aString" : "12345",
+    "anArray" : [ 111, 222, 333 ],
+    "aComplexType" : { "first" : true, "second" : false }
+}
