@@ -100,4 +100,9 @@ namespace framework
 
         return l_ret;
     }
+
+    //-----------------------------------------------------------------------//
+    bool CPluginLoader::loadConfig ( std::string& ar_file )
+    {
+    }
 };

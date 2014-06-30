@@ -30,3 +30,12 @@ namespace framework
         LOG4CXX_INFO ( m_logger, "Stop" );
     }
 };
+
+//-----------------------------------------------------------------------//
+extern "C"
+{
+    framework::IPluggable* createInstance()
+    {
+        return new framework::CPluggableStub;
+    }
+}

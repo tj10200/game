@@ -13,7 +13,7 @@ namespace framework
     class IPluggable;
 
     typedef IPluggable* (*tPluginSymbol) ();
-        
+
     /**
      * Class used to load and manage plugins
      */    

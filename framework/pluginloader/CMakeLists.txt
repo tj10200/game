@@ -26,6 +26,9 @@ link_directories (
 set ( PLUGIN_LOADER_SOURCES CPluginLoader.cpp;
                             IPluggable.cpp )
 
+prepend_path ( PLUGIN_LOADER_SOURCES ${CMAKE_CURRENT_LIST_DIR} )
+
+
 ##
 #   Libs
 ##

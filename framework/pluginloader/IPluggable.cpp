@@ -1,4 +1,6 @@
 #include "IPluggable.h"
+#include "json/json.h"
+#include "gtest/gtest.h"
 
 namespace framework
 {
