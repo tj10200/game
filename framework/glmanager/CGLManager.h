@@ -8,9 +8,15 @@
 
 namespace framework
 {
+    class CEventManager;
+    class CEvent;
+
     class CGLManager: public IPluggable
     {
         public:
+            
+            /** The global ID for this object **/
+            static const uint32_t GL_MANAGER_ID;
             
             /**
              * Constructor
@@ -38,6 +44,38 @@ namespace framework
              * Stops the application
              */
             void stop();
+        
+            /**
+             * The local copy of the display function
+             * Note that this object will just call into the registered version
+             */
+            static void  sDisplayFunction ();
+            void displayFunction();
+
+            /**
+             * The local copy of the reshape function
+             * Note that this object will just call into the registered version
+             */
+            static void  sReshapeFunction ( int a_width, int a_height );
+            void reshapeFunction( int a_width, int a_height );
+
+            /**
+             * The local copy of the keyboard function
+             * Note that this object will just call into the registered version
+             */
+            static void  sKeyboardFunction ( unsigned char a_key,
+                                             int a_mouseX, 
+                                             int a_mouseY );
+            void keyboardFunction( unsigned char a_key,
+                                   int a_mouseX,
+                                   int a_mouseY );
+
+            /**
+             * Gets the loaded instance of the manager object
+             *
+             * @return CGLManager* - the loaded object
+             */
+            static CGLManager* sGetLoadedInstance();
 
         private:
 
@@ -55,6 +93,18 @@ namespace framework
 
             /** Display Mode Flags **/
             uint32_t m_displayMode;
+
+            /** The Event Manager Instance **/
+            CEventManager* mp_eventManager;
+            
+            /** The Display Event **/
+            CEvent* mp_displayEvent;
+
+            /** The Reshape Event **/
+            CEvent* mp_reshapeEvent;
+
+            /** The Keyboard Event **/
+            CEvent* mp_keyboardEvent;
     };
 
 };
