@@ -8,6 +8,7 @@ set ( PLUGGABLE_TEST 1 )
 ##
 include ( ${CMAKE_CURRENT_LIST_DIR}/../../../build/CMakeLists.txt )
 include ( ${PLUGIN_LOADER_DIR}/CMakeLists.txt )
+include ( ${GL_MANAGER_DIR}/CMakeLists.txt )
 
 ##
 #   Includes
@@ -15,6 +16,7 @@ include ( ${PLUGIN_LOADER_DIR}/CMakeLists.txt )
 include_directories ( ${PLUGIN_LOADER_DIR}
                       ${JSONCPP_INCLUDE_DIR}
                       ${GTEST_INCLUDE_DIR}
+                      ${GL_MANAGER_DIR}
                     )
 
 ## 
@@ -46,6 +48,9 @@ set ( PLUGIN_TEST_LIBS  pluginloader;
 ##
 # Targets
 ##
+set ( CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_LIST_DIR} )
+set ( CMAKE_EXECUTABLE_OUTPUT_DIRECTORY ${CMAKE_CURRENT_LIST_DIR} )
+
 add_library ( pluginStub SHARED ${PLUGIN_LIB_SOURCES} )
 add_executable ( pluginTest ${PLUGIN_TEST_SOURCES} )
 

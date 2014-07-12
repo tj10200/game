@@ -2,6 +2,7 @@
 #define IPluggable_h
 
 #include "log4cxx/logger.h"
+#include <stdint.h>
 
 /** Forward declaration for config node **/
 namespace Json
@@ -18,8 +19,10 @@ namespace framework
              * Constructor
              *
              * @param ap_name - the name of this object
+             * @param a_id - the id of this object
              */
-            IPluggable( const char* ap_name );
+            IPluggable( const char* ap_name,
+                        const uint32_t a_id  );
     
             /**
              * Destructor
@@ -49,6 +52,11 @@ namespace framework
              */
             const std::string& getName(); 
 
+            /**
+             * Gets the ID of the object
+             */
+            const uint32_t getId();
+
         protected:
     
             /** The Logger Pointer **/
@@ -58,7 +66,10 @@ namespace framework
             std::string m_rootNode;
 
             /** The name of the object **/
-            std::string m_name;
+            const std::string m_name;
+            
+            /** The plugin ID **/
+            const uint32_t m_id;
     };
 };
  

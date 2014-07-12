@@ -20,7 +20,57 @@ namespace framework
     class CPluginLoader
     {
         public:
+            typedef std::map < const std::string, const uint64_t > tLibraryMap;
+            typedef std::vector < IPluggable* > tPluginVector;
        
+            /**
+             * Creates or retrieves the instance of the loader object
+             */
+            static CPluginLoader* getInstance();
+
+            /**
+             * Loads the library and creates a new object instance
+             *
+             * @param ar_library - the library name to load
+             * @param apr_plugin - the plugin instance to populate
+             * @return bool - true on success. false otherwise 
+             */
+            bool createPlugin ( const std::string& ar_library,
+                                IPluggable*& apr_plugin );
+        
+            /**
+             * Loads config for all plugins
+             * 
+             * @param ar_file - the config file to load
+             * @return bool - true if all plugins successfully configured
+             */
+            virtual bool loadConfig ( std::string& ar_file );
+
+            /**
+             * Starts all plugins
+             */
+            void startPlugins();
+            
+            /**
+             * Stops all plugins
+             */
+            void stopPlugins();
+
+            /** Getter for the plugin vector **/
+            const tPluginVector& getPlugins();
+        
+            /**
+             * Get a plugin using the ID
+             *
+             * @param a_id - the id of the plugin to find
+             * @param apr_plugin - the plugin pointer to populate if found
+             * @return bool - true if found
+             */
+            bool getPlugin ( const uint32_t a_id,
+                             IPluggable*& apr_plugin );
+
+        private:
+            
             /**
              * Constructor
              */
@@ -32,26 +82,18 @@ namespace framework
             virtual ~CPluginLoader();
 
             /**
-             * Loads the library and creates a new object instance
-             *
-             * @param ar_library - the library name to load
-             * @param apr_plugin - the plugin instance to populate
-             * @return int - 0 on success. -1 otherwise 
+             * Copy constructor
              */
-            int createPlugin ( const std::string& ar_library,
-                               IPluggable*& apr_plugin );
-        
-            /**
-             * Loads config for all plugins
-             * 
-             * @param ar_file - the config file to load
-             * @return bool - true if all plugins successfully configured
-             */
-            virtual bool loadConfig ( std::string& ar_file );
+            CPluginLoader ( const CPluginLoader& ar_copy )
+            {}
 
+            /**
+             * Assignment operator
+             */
+            CPluginLoader& operator= ( const CPluginLoader& ar_right )
+            { return *this; }
+        
         private:
-            typedef std::map < const std::string, const uint64_t > tLibraryMap;
-            typedef std::vector < IPluggable* > tPluginVector;
             /** Map containing all loaded libraries with handles**/
             tLibraryMap m_handles;
 

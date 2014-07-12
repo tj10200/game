@@ -12,12 +12,14 @@ include ( ${CMAKE_CURRENT_LIST_DIR}/../../build/CMakeLists.txt )
 #   Includes
 ##
 include_directories ( 
+                        ${JSONCPP_INCLUDE_DIR}
                     )
 
 ## 
 #   Lib Directories
 ##
 link_directories ( 
+                    ${JSONCPP_LIB_DIR}
                  )
 
 ##
@@ -34,11 +36,13 @@ prepend_path ( PLUGIN_LOADER_SOURCES ${CMAKE_CURRENT_LIST_DIR} )
 ##
 set ( PLUGIN_LOADER_LIBS log4cxx;
                          dl
+                         json_linux-gcc-4.6_libmt;
                     
     )
 ##
 # Targets
 ##
+set ( CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_LIST_DIR} )
 add_library ( pluginloader SHARED ${PLUGIN_LOADER_SOURCES} )
 
 ##

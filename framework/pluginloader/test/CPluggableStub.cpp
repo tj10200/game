@@ -2,9 +2,10 @@
 
 namespace framework
 {
+    const uint32_t STUB_ID = 1;
     //-----------------------------------------------------------------------//
     CPluggableStub::CPluggableStub()
-    :   IPluggable("CPluggableStub")
+    :   IPluggable("CPluggableStub", STUB_ID )
     {}
 
     //-----------------------------------------------------------------------//
