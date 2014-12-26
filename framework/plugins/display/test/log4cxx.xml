@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE log4j:configuration SYSTEM "log4j.dtd">
+<!-- Note that this file is read by the sdk every 60 seconds -->
+
+<log4j:configuration xmlns:log4j="http://jakarta.apache.org/log4j/">
+
+    <appender name="standard" class="org.apache.log4j.RollingFileAppender">
+    
+        <!-- The active sdk log file -->
+        <param name="file" value="game.standard.log" />
+        <param name="append" value="true" />
+        <param name="BufferedIO" value="false"/>
+        <param name="maxFileSize" value="10000KB" />
+        <param name="maxBackupIndex" value="1" />
+        <layout class="org.apache.log4j.PatternLayout">
+            <!-- The log message pattern -->
+            <param name="ConversionPattern" value="%5p %d{ISO8601} [%t] [%c] %m%n"/>
+        </layout>
+    
+    </appender>
+    
+    <appender name="Console" class="org.apache.log4j.ConsoleAppender">
+    
+        <!-- Logs to Console -->
+        <layout class="org.apache.log4j.PatternLayout">
+            <!-- The log message pattern -->
+            <param name="ConversionPattern" value="%5p %d{ISO8601} [%t] [%c] %m%n"/>
+        </layout>
+    
+    </appender>
+
+    <!-- Remove comment to enable Network Logging -->
+    <!--
+
+    <logger name="Network" additivity="false">
+
+        <level value="trace"/>
+        <appender-ref ref="Network" />
+
+    </logger>
+    -->
+
+    <root>
+        <priority value="info" />
+        <appender-ref ref="Console" />
+    </root>
+
+    <logger name="Loader">
+
+        <level value="info"/>
+        <appender-ref ref="Console" />
+
+    </logger>
+
+</log4j:configuration>

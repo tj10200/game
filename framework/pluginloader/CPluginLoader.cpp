@@ -5,6 +5,9 @@
 #include <dlfcn.h>
 #include <fstream>
 
+#include "CEventManager.h"
+#include "CEvent.h"
+
 namespace framework
 {
     //-----------------------------------------------------------------------//
@@ -151,6 +154,19 @@ namespace framework
             }
         }
 
+        if ( true == l_rootNode.isMember( "idle_event" ) )
+        {
+            LOG4CXX_INFO ( m_logger, "Configuring Idle Event : " << l_rootNode["idle_event"].asString().c_str()  );
+
+            CEventManager* lp_eventManager = CEventManager::sGetInstance();
+                
+            lp_eventManager->registerEvent ( l_rootNode["idle_event"].asString().c_str(),
+                                             this,
+                                             sIdleCallback,
+                                             mp_idleCallbackEvent 
+                                           );
+        }
+
         return l_ret;
     }
 
@@ -254,6 +270,37 @@ namespace framework
             ++l_handleIter;
         }
         
+    }
+
+    //-----------------------------------------------------------------------//
+    void CPluginLoader::sIdleCallback( void* ap_instance, void* ap_data )
+    {
+        static_cast< CPluginLoader*>(ap_instance)->idleCallback ( ap_data );
+    }
+
+    //-----------------------------------------------------------------------//
+    void CPluginLoader::idleCallback ( void* ap_data )
+    {
+        updatePlugins();
+    }
+
+    //-----------------------------------------------------------------------//
+    void CPluginLoader::updatePlugins()
+    {
+        static timespec l_time = {0,0};
+        clock_gettime ( CLOCK_REALTIME, &l_time );
+
+        tPluginVector::iterator l_pluginIter = m_plugins.begin();
+
+        while ( l_pluginIter != m_plugins.end() )
+        {
+            IPluggable* lp_plugin = (*l_pluginIter);
+
+            //Start the plugin
+            lp_plugin->update( l_time );
+
+            ++l_pluginIter;
+        }
     }
 
 };

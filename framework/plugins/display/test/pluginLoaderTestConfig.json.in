@@ -1,0 +1,47 @@
+{
+    "plugins" :
+    [
+        {
+            "library" : "${FRAMEWORK_DIR}/plugins/glmanager/libglmanagerplugin.so",
+            "manager" : 
+            {
+                "window_width"  : 500,
+                "window_height" : 300,
+                "window_horizontal_start" : 200,
+                "window_vertical_start" :   300,
+                "display_mode" :
+                [
+                    "GLUT_DOUBLE",
+                    "GLUT_ALPHA",
+                    "GLUT_DEPTH",
+                    "GLUT_STENCIL"
+                ],
+                "display_event" : "displayEvent",
+                "reshape_event" : "reshapeEvent",
+                "keyboard_event" : "keyboardEvent",
+                "window_close_event" : "windowCloseEvent",
+                "idle_event" : "idleEvent"
+            }
+        },
+        {
+            "library" : "${FRAMEWORK_DIR}/plugins/display/libdisplayplugin.so",
+            "display" :
+            {
+                "display_event" : "displayEvent",
+                "reshape_event" : "reshapeEvent",
+                "vertex_shader" : "${FRAMEWORK_DIR}/plugins/display/test/vertexShader.vert",
+                "frag_shader" : "${FRAMEWORK_DIR}/plugins/display/test/gradiantShader.frag",
+                "renderable_plugin" : "${FRAMEWORK_DIR}/plugins/renderable/plugins/libsimpleanimatabletriangleplugin.so"
+            }
+        },
+        {
+            "library" : "${FRAMEWORK_DIR}/plugins/keyboard/libkeyboardplugin.so",
+            "keyboard" :
+            {
+                "keyboard_event" : "keyboardEvent",
+                "window_close_event" : "windowCloseEvent"
+            }
+        }
+    ],
+    "idle_event" : "idleEvent"
+}

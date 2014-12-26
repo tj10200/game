@@ -17,6 +17,11 @@ namespace framework
     IPluggable::~IPluggable()
     {}
 
+    void IPluggable::update ( const timespec& ar_time )
+    {
+        return;
+    }
+
     //-----------------------------------------------------------------------//
     const std::string& IPluggable::getName()
     {

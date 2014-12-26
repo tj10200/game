@@ -11,6 +11,7 @@ namespace framework
 {
     /** Forward declaration for the pluggin object **/
     class IPluggable;
+    class CEvent;
 
     typedef IPluggable* (*tPluginSymbol) ();
 
@@ -69,6 +70,19 @@ namespace framework
             bool getPlugin ( const uint32_t a_id,
                              IPluggable*& apr_plugin );
 
+            /**
+             * The idle callback function
+             */
+            static void sIdleCallback ( void* ap_instance, 
+                                        void* ap_data );
+            void idleCallback ( void* ap_data );
+
+            /**
+             * Updates the plugins with the current time
+             *
+             */
+            void updatePlugins();
+
         private:
             
             /**
@@ -102,6 +116,10 @@ namespace framework
 
             /** The logger object **/
             log4cxx::LoggerPtr m_logger;
+
+            /** The idle Callback Event object **/
+            CEvent* mp_idleCallbackEvent;
+            
     };
 };
 

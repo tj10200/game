@@ -5,6 +5,7 @@
 
 #include <stdint.h>
 #include "log4cxx/logger.h"
+#include <boost/thread.hpp>
 
 namespace framework
 {
@@ -46,6 +47,11 @@ namespace framework
             void stop();
         
             /**
+             * Initializes the GLUT context
+             */
+            void initializeContext();
+
+            /**
              * The local copy of the display function
              * Note that this object will just call into the registered version
              */
@@ -69,6 +75,25 @@ namespace framework
             void keyboardFunction( unsigned char a_key,
                                    int a_mouseX,
                                    int a_mouseY );
+
+            /**
+             * The local copy of the window close function
+             * Note that this object will just call into the registered version
+             */
+            static void  sCloseFunction ();
+            void closeFunction();
+
+            /**
+             * The local copy of the idle function
+             * Note that this object will just call into the registered version
+             */
+            static void  sIdleFunction ();
+            void idleFunction();
+
+            /**
+             * The GLUT main loop thread
+             */
+            void threadFunc();
 
             /**
              * Gets the loaded instance of the manager object
@@ -105,6 +130,15 @@ namespace framework
 
             /** The Keyboard Event **/
             CEvent* mp_keyboardEvent;
+
+            /** The Close Event **/
+            CEvent* mp_windowCloseEvent;
+
+            /** The Idle Event **/
+            CEvent* mp_idleEvent;
+
+            /** The GLUT Main Loop thread **/
+            boost::thread m_thread;
     };
 
 };

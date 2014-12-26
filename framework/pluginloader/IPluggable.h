@@ -48,6 +48,11 @@ namespace framework
             virtual void stop() =0;
 
             /**
+             * Updates the plugin with the current time
+             */
+            virtual void update ( const timespec& ar_time );
+
+            /**
              * Gets the name of the object
              */
             const std::string& getName(); 
