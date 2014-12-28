@@ -11,7 +11,8 @@ namespace framework
 
     //-----------------------------------------------------------------------//
     IRenderable::~IRenderable()
-    {}
+    {
+    }
 
     //-----------------------------------------------------------------------//
     void IRenderable::computeHash()
@@ -26,7 +27,7 @@ namespace framework
 
         IRenderable* lp_two = (IRenderable*)apr_two;
 
-        l_ret = ( m_name == lp_two->m_name );
+        l_ret = ( m_id == lp_two->m_id );
 
         return l_ret;
 
@@ -35,6 +36,45 @@ namespace framework
     //-----------------------------------------------------------------------//
     void IRenderable::update( const timespec& ar_time )
     {
-        return;
+       m_preChildren.visit ( IRenderable::sVisitorUpdate, ar_time ); 
+       m_postChildren.visit ( IRenderable::sVisitorUpdate, ar_time ); 
     }
+
+    //-----------------------------------------------------------------------//
+    void IRenderable::addPreChild ( IRenderable* ap_child )
+    {
+        m_preChildren.insert ( ap_child );
+    }
+
+    //-----------------------------------------------------------------------//
+    IRenderable* IRenderable::getPreChild ( uint32_t a_id )
+    {
+    }
+
+    //-----------------------------------------------------------------------//
+    bool IRenderable::removePreChild ( uint32_t a_id )
+    {
+    }
+
+    //-----------------------------------------------------------------------//
+    void IRenderable::addPostChild ( IRenderable* ap_child )
+    {
+    }
+
+    //-----------------------------------------------------------------------//
+    IRenderable* IRenderable::getPostChild ( uint32_t a_id )
+    {
+    }
+
+    //-----------------------------------------------------------------------//
+    bool IRenderable::removePostChild ( uint32_t a_id )
+    {
+    }
+
+    //-----------------------------------------------------------------------//
+    void IRenderable::sVisitorUpdate ( IRenderable* ap_obj, const timespec& ar_data )
+    {
+        ap_obj->update ( ar_data );
+    }
+
 }

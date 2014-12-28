@@ -69,7 +69,6 @@ namespace framework
             for ( int i = 0; i < 6; ++i )
                 *(ms_vertexData + (i * 4) ) += (ls_updateAmount * ls_direction );
 
-            m_updated = true;
             glutPostRedisplay();
         }
     }
@@ -79,14 +78,10 @@ namespace framework
     {
         glBindBuffer(GL_ARRAY_BUFFER, m_vertexBufferHandle);
 
-        if ( true == m_updated )
-        {
-            glBufferSubData ( GL_ARRAY_BUFFER, 
-                              0,
-                              sizeof ( ms_vertexData ),
-                              ms_vertexData );
-            m_updated = false;
-        }
+        glBufferSubData ( GL_ARRAY_BUFFER, 
+                          0,
+                          sizeof ( ms_vertexData ),
+                          ms_vertexData );
 
         glEnableVertexAttribArray(0);
         glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 0, 0);

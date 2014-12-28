@@ -12,6 +12,7 @@ include ( ${DISPLAY_PLUGIN_DIR}/CMakeLists.txt )
 include ( ${KEYBOARD_PLUGIN_DIR}/CMakeLists.txt )
 include ( ${GL_MANAGER_DIR}/CMakeLists.txt )
 include ( ${KEYBOARD_PLUGIN_DIR}/CMakeLists.txt )
+include ( ${RENDERABLE_PLUGINS_DIR}/CMakeLists.txt )
 
 ##
 # Config files

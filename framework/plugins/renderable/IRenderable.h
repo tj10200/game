@@ -4,6 +4,7 @@
 #include "IPluggable.h"
 #include <GL/freeglut.h>
 #include "THashable.h"
+#include "TVector.h"
 
 namespace framework
 {
@@ -46,11 +47,80 @@ namespace framework
              */
             virtual void update ( const timespec& ar_time );
 
+            /**
+             * Adds a pre child to the list
+             *
+             * @param ap_child - the child object to add
+             */
+            void addPreChild ( IRenderable* ap_child );
+
+            /**
+             * Gets a pre child using the ID. If multiple
+             * will return the first instance matching the ID
+             *
+             * @param a_id - the id to search for
+             * @return IRenderable - the pointer to the child object
+             */
+            IRenderable* getPreChild ( uint32_t a_id );
+
+            /**
+             * Removes a child from the pre list
+             *
+             * @param a_id - the id of the child to remove
+             * @return bool - true if found and destroyed
+             */
+            bool removePreChild ( uint32_t a_id );
+
+            /**
+             * Adds a post child to the list
+             *
+             * @param ap_child - the child object to add
+             */
+            void addPostChild ( IRenderable* ap_child );
+
+            /**
+             * Gets a post child using the ID. If multiple
+             * will return the first instance matching the ID
+             *
+             * @param a_id - the id to search for
+             * @return IRenderable - the pointer to the child object
+             */
+            IRenderable* getPostChild ( uint32_t a_id );
+
+            /**
+             * Removes a child from the post list
+             *
+             * @param a_id - the id of the child to remove
+             * @return bool - true if found and destroyed
+             */
+            bool removePostChild ( uint32_t a_id );
+
+            /**
+             * Visitor updator. Updates all children
+             *
+             * @param ap_inst - the object to act on
+             * @param ar_data - the data to act on
+             */
+            static void sVisitorUpdate ( IRenderable* ap_obj, const timespec& ar_data );
+
+            /**
+             * Visitor find. Finds the child matching the id
+             *
+             * @param ap_inst - the object to look up
+             * @param apr_data - the object to return
+             */
+            static bool sVisitorFind ( IRenderable* ap_obj, uint32_t a_id, IRenderable*& apr_return );
+
         protected:
 
             /** The vertex buffer handle **/
             GLuint  m_vertexBufferHandle;
-        
+
+            /** The children to render before this object **/
+            containers::TVector < IRenderable*, uint32_t > m_preChildren;
+            
+            /** The children to render after this object **/
+            containers::TVector < IRenderable*, uint32_t > m_postChildren;
     };
 };
 

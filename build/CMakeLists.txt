@@ -83,6 +83,7 @@ set ( GLSDK_GLUTIL_LIB_DIR ${GLSDK_GLUTIL_DIR}/lib )
 
 set ( BOOST_INCLUDE_DIR ${THIRD_PARTY_DIR}/boost )
 set ( BOOST_LIB_DIR ${BOOST_INCLUDE_DIR}/stage/lib )
+
 ###########################################################
 #       Framework
 ###########################################################
@@ -99,5 +100,11 @@ set ( GL_MANAGER_DIR ${FRAMEWORK_PLUGINS_DIR}/glmanager )
 set ( DISPLAY_PLUGIN_DIR ${FRAMEWORK_PLUGINS_DIR}/display )
 set ( KEYBOARD_PLUGIN_DIR ${FRAMEWORK_PLUGINS_DIR}/keyboard )
 set ( RENDERABLE_DIR ${FRAMEWORK_PLUGINS_DIR}/renderable )
+set ( RENDERABLE_PLUGINS_DIR ${RENDERABLE_DIR}/plugins )
+
+###########################################################
+#      COntainers 
+###########################################################
+set ( CONTAINER_DIR ${GAME_ROOT_DIR}/containers )
 
 endif()
