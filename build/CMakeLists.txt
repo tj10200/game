@@ -84,6 +84,8 @@ set ( GLSDK_GLUTIL_LIB_DIR ${GLSDK_GLUTIL_DIR}/lib )
 set ( BOOST_INCLUDE_DIR ${THIRD_PARTY_DIR}/boost )
 set ( BOOST_LIB_DIR ${BOOST_INCLUDE_DIR}/stage/lib )
 
+set ( OPTION_PARSER_DIR ${THIRD_PARTY_DIR}/optionparser )
+
 ###########################################################
 #       Framework
 ###########################################################
