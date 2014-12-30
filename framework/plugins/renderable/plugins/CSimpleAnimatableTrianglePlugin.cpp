@@ -49,16 +49,15 @@ namespace framework
     {}
         
     //-----------------------------------------------------------------------//
-    void CSimpleAnimatableTrianglePlugin::update( const timespec& ar_timeDiff )
+    void CSimpleAnimatableTrianglePlugin::update( const float& ar_elapsedSeconds )
     {
         static float ls_updateAmount = 0.05f;
-        static uint32_t ls_updateTimeUs = 500;
+        static uint32_t ls_updateTimeUs = 33.0f / 1000.0f; // Update every 33ms
         static timespec ls_lastTime = {0,0};
         static float ls_maxAmount = 5.0f;
         static float ls_direction = 1.0f;
 
-        if ( ar_timeDiff.tv_sec > ls_lastTime.tv_sec ||
-             (ar_timeDiff.tv_nsec - ls_lastTime.tv_nsec ) >= ls_updateTimeUs )
+        if ( ( ar_elapsedSeconds - ls_updateTimeUs ) >= ls_updateTimeUs )
         {
             if ( ms_vertexData[0] >= ls_maxAmount ||
                  ms_vertexData[0] <= 0 )
@@ -68,6 +67,8 @@ namespace framework
     
             for ( int i = 0; i < 6; ++i )
                 *(ms_vertexData + (i * 4) ) += (ls_updateAmount * ls_direction );
+
+            ls_updateTimeUs = ar_elapsedTime;
 
             glutPostRedisplay();
         }

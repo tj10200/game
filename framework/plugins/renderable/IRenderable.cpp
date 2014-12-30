@@ -34,7 +34,7 @@ namespace framework
     }
 
     //-----------------------------------------------------------------------//
-    void IRenderable::update( const timespec& ar_time )
+    void IRenderable::update( const float& ar_time )
     {
        m_preChildren.visit ( IRenderable::sVisitorUpdate, ar_time ); 
        m_postChildren.visit ( IRenderable::sVisitorUpdate, ar_time ); 
@@ -72,7 +72,7 @@ namespace framework
     }
 
     //-----------------------------------------------------------------------//
-    void IRenderable::sVisitorUpdate ( IRenderable* ap_obj, const timespec& ar_data )
+    void IRenderable::sVisitorUpdate ( IRenderable* ap_obj, const float& ar_data )
     {
         ap_obj->update ( ar_data );
     }

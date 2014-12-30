@@ -43,9 +43,9 @@ namespace framework
             /**
              * Updates the renderable item
              *
-             * @param ar_time - the current time
+             * @param ar_elapsedTime - the program elapsed time in seconds
              */
-            virtual void update ( const timespec& ar_time );
+            virtual void update ( const float& ar_elapsedTime );
 
             /**
              * Adds a pre child to the list
@@ -101,7 +101,7 @@ namespace framework
              * @param ap_inst - the object to act on
              * @param ar_data - the data to act on
              */
-            static void sVisitorUpdate ( IRenderable* ap_obj, const timespec& ar_data );
+            static void sVisitorUpdate ( IRenderable* ap_obj, const float& ar_data );
 
             /**
              * Visitor find. Finds the child matching the id

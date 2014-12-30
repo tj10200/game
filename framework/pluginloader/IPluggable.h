@@ -49,8 +49,10 @@ namespace framework
 
             /**
              * Updates the plugin with the current time
+             *
+             * @param ar_elapsedSeconds - the seconds elapsed since program start
              */
-            virtual void update ( const timespec& ar_time );
+            virtual void update ( const float& ar_elapsedSeconds );
 
             /**
              * Gets the name of the object

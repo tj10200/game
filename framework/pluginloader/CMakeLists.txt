@@ -7,12 +7,16 @@ set ( PLUGIN_LOADER 1 )
 #   Paths file
 ##
 include ( ${CMAKE_CURRENT_LIST_DIR}/../../build/CMakeLists.txt )
+include ( ${EVENT_MANAGER_DIR}/CMakeLists.txt )
+include ( ${GL_MANAGER_DIR}/CMakeLists.txt )
 
 ##
 #   Includes
 ##
 include_directories ( 
                         ${JSONCPP_INCLUDE_DIR}
+                        ${EVENT_MANAGER_DIR}
+                        ${GL_MANAGER_DIR}
                     )
 
 ## 
@@ -37,6 +41,7 @@ prepend_path ( PLUGIN_LOADER_SOURCES ${CMAKE_CURRENT_LIST_DIR} )
 set ( PLUGIN_LOADER_LIBS log4cxx;
                          dl
                          json_linux-gcc-4.6_libmt;
+                         glmanagerplugin;
                     
     )
 ##

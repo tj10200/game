@@ -8,6 +8,8 @@
 #include "CEventManager.h"
 #include "CEvent.h"
 
+#include "CGLManager.h"
+
 namespace framework
 {
     //-----------------------------------------------------------------------//
@@ -287,8 +289,10 @@ namespace framework
     //-----------------------------------------------------------------------//
     void CPluginLoader::updatePlugins()
     {
-        static timespec l_time = {0,0};
-        clock_gettime ( CLOCK_REALTIME, &l_time );
+        IPluggable* lp_glmanager = NULL;
+        getPlugin (  CGLManager::GL_MANAGER_ID, lp_glmanager );
+
+        float l_elapsedSeconds = static_cast < CGLManager* >(lp_glmanager)->getElapsedTime ();
 
         tPluginVector::iterator l_pluginIter = m_plugins.begin();
 
@@ -297,7 +301,7 @@ namespace framework
             IPluggable* lp_plugin = (*l_pluginIter);
 
             //Start the plugin
-            lp_plugin->update( l_time );
+            lp_plugin->update( l_elapsedSeconds );
 
             ++l_pluginIter;
         }

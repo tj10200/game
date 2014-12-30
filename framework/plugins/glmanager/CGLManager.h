@@ -91,6 +91,13 @@ namespace framework
             void idleFunction();
 
             /**
+             * Get the glut elapsed time
+             *
+             * @return float - the program elapsed time in seconds
+             */
+            float getElapsedTime();
+
+            /**
              * The GLUT main loop thread
              */
             void threadFunc();

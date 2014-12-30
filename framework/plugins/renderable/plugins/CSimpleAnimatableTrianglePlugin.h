@@ -39,11 +39,9 @@ namespace framework
             virtual void stop();
         
             /**
-             * update the triangle object
-             * 
-             * the change in time since last update
+             * @inherited from base
              */
-            virtual void update( const timespec& ar_timeDiff );
+            virtual void update( const float& ar_elapsedSeconds );
 
             /**
              * Render the triangle object

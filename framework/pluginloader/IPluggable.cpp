@@ -1,6 +1,5 @@
 #include "IPluggable.h"
 #include "json/json.h"
-#include "gtest/gtest.h"
 
 namespace framework
 {
@@ -17,7 +16,7 @@ namespace framework
     IPluggable::~IPluggable()
     {}
 
-    void IPluggable::update ( const timespec& ar_time )
+    void IPluggable::update ( const float& ar_elapsedSeconds )
     {
         return;
     }

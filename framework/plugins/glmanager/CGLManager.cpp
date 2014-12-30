@@ -469,6 +469,12 @@ namespace framework
     }
 
     //-----------------------------------------------------------------------//
+    float CGLManager::getElapsedTime()
+    {
+        return glutGet(GLUT_ELAPSED_TIME) / 1000.0f;
+    }
+
+    //-----------------------------------------------------------------------//
     void CGLManager::threadFunc()
     {
     }
