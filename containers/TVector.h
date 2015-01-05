@@ -52,11 +52,28 @@ namespace containers
             void visit ( TFunc a_func, TData a_data );
 
             /**
+             * find function used to return single item from the list
+             *
+             * @parma a_index - the find index
+             * @param ar_obj - will be populated with found result
+             * @return bool - true if found
+             */
+            bool find ( TSizeType a_index, TClassType& ar_type );
+
+            /**
              * Push an item to the back of the array 
              *
              * @param a_item - the item to insert
              */
             void insert ( TClassType a_item );
+
+            /**
+             * Operator[] returns value at index
+             *
+             * @param a_index - the index to return
+             * @return const TClassType - the object
+             */
+            const TClassType& operator [] ( int i );
 
             /**
              * The number of elements currently stored
@@ -173,6 +190,24 @@ namespace containers
 
     //-----------------------------------------------------------------------//
     template < typename TClassType, typename TSizeType >
+    bool TVector < TClassType, TSizeType >::find ( TSizeType a_index, TClassType& ar_obj )
+    {
+        bool l_ret = true;
+
+        if ( a_index < m_numItems )
+        {
+            ar_obj = mp_array[a_index];
+        }
+        else
+        {
+            l_ret = false;
+        }
+
+        return l_ret;
+    }
+
+    //-----------------------------------------------------------------------//
+    template < typename TClassType, typename TSizeType >
     void TVector < TClassType, TSizeType >::insert ( TClassType a_item )
     {
         if ( m_numItems == m_arraySize )
@@ -181,6 +216,13 @@ namespace containers
         }
 
         mp_array [ m_numItems++ ] = a_item;
+    }
+
+    //-----------------------------------------------------------------------//
+    template < typename TClassType, typename TSizeType >
+    const TClassType& TVector < TClassType, TSizeType >::operator []( int a_index )
+    {
+        return mp_array[a_index];
     }
 
     //-----------------------------------------------------------------------//
