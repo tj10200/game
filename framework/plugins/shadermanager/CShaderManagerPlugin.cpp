@@ -61,6 +61,63 @@ namespace framework
             }
         }
         
+        if ( true == l_ret )
+        {
+            if ( false == l_shaderManagerNode.isMember ( "destroy_program_event" ) )
+            {
+                LOG4CXX_ERROR ( m_logger, "Unable to locate destroy program event subscriber name" );
+                l_ret = false;
+            }
+            else
+            {
+                CEventManager* lp_eventManager = CEventManager::sGetInstance();
+                
+                lp_eventManager->registerEvent ( l_shaderManagerNode["destroy_program_event"].asString().c_str(),
+                                                 this,
+                                                 sDestroyProgramCallback,
+                                                 mp_destroyProgramCallbackEvent 
+                                               );
+            }
+        }
+        
+        if ( true == l_ret )
+        {
+            if ( false == l_shaderManagerNode.isMember ( "enable_shader_event" ) )
+            {
+                LOG4CXX_ERROR ( m_logger, "Unable to locate enable event subscriber name" );
+                l_ret = false;
+            }
+            else
+            {
+                CEventManager* lp_eventManager = CEventManager::sGetInstance();
+                
+                lp_eventManager->registerEvent ( l_shaderManagerNode["enable_shader_event"].asString().c_str(),
+                                                 this,
+                                                 sEnableShaderCallback,
+                                                 mp_enableShaderCallbackEvent 
+                                               );
+            }
+        }
+        
+        if ( true == l_ret )
+        {
+            if ( false == l_shaderManagerNode.isMember ( "disable_shader_event" ) )
+            {
+                LOG4CXX_ERROR ( m_logger, "Unable to locate disable event subscriber name" );
+                l_ret = false;
+            }
+            else
+            {
+                CEventManager* lp_eventManager = CEventManager::sGetInstance();
+                
+                lp_eventManager->registerEvent ( l_shaderManagerNode["disable_shader_event"].asString().c_str(),
+                                                 this,
+                                                 sDisableShaderCallback,
+                                                 mp_disableShaderCallbackEvent 
+                                               );
+            }
+        }
+        
         return l_ret;
     }
 
@@ -78,53 +135,57 @@ namespace framework
     //-----------------------------------------------------------------------//
     void CShaderManagerPlugin::sCreateShaderCallback ( void* ap_instance, void* ap_data )
     {
-        static_cast< CShaderManagerPlugin* >(ap_instance)->createShaderCallback ( ap_data );
+        static_cast< CShaderManagerPlugin* >(ap_instance)->createShaderCallback ( (SShaderData*)ap_data );
     }
 
     //-----------------------------------------------------------------------//
-    void CShaderManagerPlugin::createShaderCallback ( void* ap_data )
+    void CShaderManagerPlugin::createShaderCallback ( SShaderData* ap_data )
     {
-    }
 
-    //-----------------------------------------------------------------------//
-    void CShaderManagerPlugin::sDestroyShaderCallback( void* ap_instance, void* ap_data )
-    {
-        static_cast< CShaderManagerPlugin* >(ap_instance)->destroyShaderCallback ( ap_data );
-    }
+        tCompiledShaders l_compiledShaders;
 
-    //-----------------------------------------------------------------------//
-    void CShaderManagerPlugin::destroyShaderCallback( void* ap_data )
-    {
+        for ( int i = 0; i < ap_data->m_shaderFiles.size(); ++i )
+        {
+            tShaderFile l_file = ap_data->m_shaderFiles[i];
+            l_compiledShaders.insert ( loadShader ( l_file.first,
+                                                    l_file.second ) );
+        }
+
+        m_shaderPrograms[ ap_data->m_shaderTag ] = createProgram ( l_compiledShaders );
     }
 
     //-----------------------------------------------------------------------//
     void CShaderManagerPlugin::sDestroyProgramCallback( void* ap_instance, void* ap_data )
     {
-        static_cast< CShaderManagerPlugin* >(ap_instance)->destroyProgramCallback ( ap_data );
+        static_cast< CShaderManagerPlugin* >(ap_instance)->destroyProgramCallback ( (uint16_t*)ap_data );
     }
 
     //-----------------------------------------------------------------------//
-    void CShaderManagerPlugin::destroyProgramCallback( void* ap_data )
+    void CShaderManagerPlugin::destroyProgramCallback( uint16_t* ap_data )
     {
+        GLuint l_program = m_shaderPrograms [ (*ap_data) ];
+
+        glDeleteProgram ( l_program );
+
+        m_shaderPrograms [ (*ap_data) ] = 0;
     }
 
     //-----------------------------------------------------------------------//
     void CShaderManagerPlugin::sEnableShaderCallback( void* ap_instance, void* ap_data )
     {
-        static_cast< CShaderManagerPlugin* >(ap_instance)->enableShaderCallback ( ap_data );
+        static_cast< CShaderManagerPlugin* >(ap_instance)->enableShaderCallback ( (uint16_t*)ap_data );
     }
 
     //-----------------------------------------------------------------------//
-    void CShaderManagerPlugin::enableShaderCallback ( void* ap_data )
+    void CShaderManagerPlugin::enableShaderCallback ( uint16_t* ap_data )
     {
-        uint16_t l_shaderId = (uint16_t)*((uint16_t*)ap_data);
-
         GLuint l_shaderHandle = 0;
 
-        if ( true == m_shaderPrograms.find ( l_shaderId, l_shaderHandle ) )
+        if ( true == m_shaderPrograms.find ( (*ap_data), l_shaderHandle ) )
         {
-            if ( 0 == m_enabledShaderProgram ||
-                 m_enabledShaderProgram != l_shaderHandle )
+            if ( 0 != l_shaderHandle &&
+                 ( 0 == m_enabledShaderProgram ||
+                   m_enabledShaderProgram != l_shaderHandle ) )
             {
                 m_enabledShaderProgram = l_shaderHandle;
                 glUseProgram( l_shaderHandle );
@@ -135,11 +196,11 @@ namespace framework
     //-----------------------------------------------------------------------//
     void CShaderManagerPlugin::sDisableShaderCallback( void* ap_instance, void* ap_data )
     {
-        static_cast< CShaderManagerPlugin* >(ap_instance)->disableShaderCallback ( ap_data );
+        static_cast< CShaderManagerPlugin* >(ap_instance)->disableShaderCallback ( (uint16_t*)ap_data );
     }
 
     //-----------------------------------------------------------------------//
-    void CShaderManagerPlugin::disableShaderCallback ( void* ap_data )
+    void CShaderManagerPlugin::disableShaderCallback ( uint16_t* ap_data )
     {
         m_enabledShaderProgram = 0;
         glUseProgram(0);

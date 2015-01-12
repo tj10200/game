@@ -17,7 +17,23 @@ namespace framework
         public:
             static const uint32_t SHADER_MANAGER_PLUGIN_ID;
 
+            typedef std::pair < GLuint, std::string > tShaderFile;
+            typedef containers::TVector < tShaderFile, uint8_t > tShaderFileVec;
+            typedef containers::TVector < GLuint, uint16_t > tCompiledShaders;
             typedef containers::TVector< GLuint, uint16_t > tShaderVec;
+            
+            struct SShaderData 
+            {
+                /**
+                 * internal tag identifier for the shader
+                 */
+                uint16_t m_shaderTag;
+                
+                /**
+                 * Vector of shader files
+                 */
+                tShaderFileVec m_shaderFiles;
+            };
 
             /**
              * Constructor
@@ -53,21 +69,12 @@ namespace framework
              * Create shader callback function used to create a new shader
              * program
              *
-             * @param ap_data - expects a TVector of shader files to link into
+             * @param ap_data - expects a std::vector of pairs of shader files to link into
              *  a shader program
              */
             static void sCreateShaderCallback ( void* ap_instance,
                                                 void* ap_data );
-            void createShaderCallback ( void* ap_data );
-            
-            /**
-             * Destroy shader callback function. Destroys individual shaders 
-             *
-             * @param ap_data - expects a TVector of GLUint shader handles
-             */
-            static void sDestroyShaderCallback ( void* ap_instance,
-                                                 void* ap_data );
-            void destroyShaderCallback ( void* ap_data );
+            void createShaderCallback ( SShaderData* ap_data );
             
             /**
              * Destroy shader program callback function. Destroys a shader program
@@ -76,21 +83,21 @@ namespace framework
              */
             static void sDestroyProgramCallback ( void* ap_instance,
                                                   void* ap_data );
-            void destroyProgramCallback ( void* ap_data );
+            void destroyProgramCallback ( uint16_t* ap_data );
             
             /**
              * The enable shader callback function
              */
             static void sEnableShaderCallback ( void* ap_instance, 
                                                 void* ap_data );
-            void enableShaderCallback ( void* ap_data );
+            void enableShaderCallback ( uint16_t* ap_data );
 
             /**
              * The disable shader callback function
              */
             static void sDisableShaderCallback ( void* ap_instance, 
                                                  void* ap_data );
-            void disableShaderCallback ( void* ap_data );
+            void disableShaderCallback ( uint16_t* ap_data );
 
         private:
 

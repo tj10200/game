@@ -73,7 +73,7 @@ namespace containers
              * @param a_index - the index to return
              * @return const TClassType - the object
              */
-            const TClassType& operator [] ( int i );
+            TClassType& operator [] ( int i );
 
             /**
              * The number of elements currently stored
@@ -220,7 +220,7 @@ namespace containers
 
     //-----------------------------------------------------------------------//
     template < typename TClassType, typename TSizeType >
-    const TClassType& TVector < TClassType, TSizeType >::operator []( int a_index )
+    TClassType& TVector < TClassType, TSizeType >::operator []( int a_index )
     {
         return mp_array[a_index];
     }
