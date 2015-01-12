@@ -141,7 +141,6 @@ namespace framework
     //-----------------------------------------------------------------------//
     void CShaderManagerPlugin::createShaderCallback ( SShaderData* ap_data )
     {
-
         tCompiledShaders l_compiledShaders;
 
         for ( int i = 0; i < ap_data->m_shaderFiles.size(); ++i )
@@ -151,7 +150,8 @@ namespace framework
                                                     l_file.second ) );
         }
 
-        m_shaderPrograms[ ap_data->m_shaderTag ] = createProgram ( l_compiledShaders );
+        m_shaderPrograms.insert ( createProgram ( l_compiledShaders ) );
+        ap_data->m_shaderTag = m_shaderPrograms.size() - 1;
     }
 
     //-----------------------------------------------------------------------//
