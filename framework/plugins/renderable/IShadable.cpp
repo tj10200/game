@@ -1,4 +1,4 @@
-#include "CShaderManagerPlugin.h"
+#include "CDisplayPlugin.h"
 #include "CEventManager.h"
 
 #include "json/json.h"
@@ -6,208 +6,192 @@
 #include <fstream>
 #include <sstream>
 
+#include "GLManagerEvents.h"
+
 #include "CPluginLoader.h"
+#include "IRenderable.h"
 
 namespace framework
 {
-    const uint32_t CShaderManagerPlugin::SHADER_MANAGER_PLUGIN_ID = 1420387173;
+    const uint32_t DISPLAY_PLUGIN_ID = 1405198146;
+    IPluggable * gp_renderable = NULL;
 
     //-----------------------------------------------------------------------//
-    CShaderManagerPlugin::CShaderManagerPlugin()
-    :   IPluggable("CShaderManagerPlugin", SHADER_MANAGER_PLUGIN_ID),
-        m_enabledShaderProgram ( 0 ),
-        m_shaderPrograms ( 10, 10 )
+    CDisplayPlugin::CDisplayPlugin()
+    :   IPluggable("CDisplayPlugin", DISPLAY_PLUGIN_ID),
+        m_windowSizeUniform(0),
+        m_windowSize(0)
     {}
 
     //-----------------------------------------------------------------------//
-    CShaderManagerPlugin::~CShaderManagerPlugin()
+    CDisplayPlugin::~CDisplayPlugin()
     {}
 
     //-----------------------------------------------------------------------//
-    bool CShaderManagerPlugin::loadConfig ( const Json::Value& ar_node )
+    bool CDisplayPlugin::loadConfig ( const Json::Value& ar_node )
     {
         bool l_ret = true;
 
         LOG4CXX_INFO ( m_logger, "Load Config" );
         
-        Json::Value l_shaderManagerNode;
+        Json::Value l_displayNode;
 
-        if ( false == ar_node["shader_manager"].isObject() )
+        if ( false == ar_node["display"].isObject() )
         {
             LOG4CXX_ERROR ( m_logger, "Unable to locate the manager element" );
             l_ret = false;
         }
         else
         {
-            l_shaderManagerNode = ar_node["shader_manager"]; 
+            l_displayNode = ar_node["display"]; 
         }
 
         if ( true == l_ret )
         {
-            if ( false == l_shaderManagerNode.isMember ( "create_shader_event" ) )
+            if ( false == l_displayNode.isMember ( "display_event" ) )
             {
-                LOG4CXX_ERROR ( m_logger, "Unable to locate create event subscriber name" );
+                LOG4CXX_ERROR ( m_logger, "Unable to locate display event subscriber name" );
                 l_ret = false;
             }
             else
             {
                 CEventManager* lp_eventManager = CEventManager::sGetInstance();
                 
-                lp_eventManager->registerEvent ( l_shaderManagerNode["create_shader_event"].asString().c_str(),
+                lp_eventManager->registerEvent ( l_displayNode["display_event"].asString().c_str(),
                                                  this,
-                                                 sCreateShaderCallback,
-                                                 mp_createShaderCallbackEvent 
+                                                 sDisplayCallback,
+                                                 mp_displayCallbackEvent 
                                                );
             }
         }
         
         if ( true == l_ret )
         {
-            if ( false == l_shaderManagerNode.isMember ( "destroy_program_event" ) )
+            if ( false == l_displayNode.isMember ( "reshape_event" ) )
             {
-                LOG4CXX_ERROR ( m_logger, "Unable to locate destroy program event subscriber name" );
+                LOG4CXX_ERROR ( m_logger, "Unable to locate display event subscriber name" );
                 l_ret = false;
             }
             else
             {
                 CEventManager* lp_eventManager = CEventManager::sGetInstance();
                 
-                lp_eventManager->registerEvent ( l_shaderManagerNode["destroy_program_event"].asString().c_str(),
+                lp_eventManager->registerEvent ( l_displayNode["reshape_event"].asString().c_str(),
                                                  this,
-                                                 sDestroyProgramCallback,
-                                                 mp_destroyProgramCallbackEvent 
+                                                 sReshapeCallback,
+                                                 mp_reshapeCallbackEvent 
                                                );
+            }
+        }
+
+        if ( true == l_ret )
+        {
+            if ( false == l_displayNode.isMember ( "renderable_plugin" ) )
+            {
+                LOG4CXX_ERROR ( m_logger, "Unable to load renderable plugin used in display" );
+                l_ret = false;
+            }
+            else
+            {
+                framework::CPluginLoader* lp_loader = CPluginLoader::getInstance();
+                lp_loader->createPlugin ( l_displayNode["renderable_plugin"].asString(),
+                                          gp_renderable );
+            }   
+        }
+        
+        if ( true == l_ret )
+        {
+            if ( false == l_displayNode.isMember ( "shader_dir" ) )
+            {
+                LOG4CXX_ERROR ( m_logger, "Unable to locate shader directory" );
+                l_ret = false;
+            }
+            else
+            {
+                std::string l_shaderDir = l_displayNode["shader_dir"].asString();
+
+                gp_renderable->setShaderDir ( l_shaderDir );
+            }
+        }
+
+        if ( true == l_ret )
+        {
+            if ( false == l_displayNode.isMember ( "frag_shader" ) )
+            {
+                LOG4CXX_ERROR ( m_logger, "Unable to locate display fragment shader node" );
+                l_ret = false;
+            }
+            else
+            {
+                std::string l_fragShader = l_displayNode["frag_shader"].asString();
+                l_shaderVec.push_back ( loadShader( GL_FRAGMENT_SHADER,
+                                                    l_fragShader ) );
             }
         }
         
         if ( true == l_ret )
         {
-            if ( false == l_shaderManagerNode.isMember ( "enable_shader_event" ) )
-            {
-                LOG4CXX_ERROR ( m_logger, "Unable to locate enable event subscriber name" );
-                l_ret = false;
-            }
-            else
-            {
-                CEventManager* lp_eventManager = CEventManager::sGetInstance();
-                
-                lp_eventManager->registerEvent ( l_shaderManagerNode["enable_shader_event"].asString().c_str(),
-                                                 this,
-                                                 sEnableShaderCallback,
-                                                 mp_enableShaderCallbackEvent 
-                                               );
-            }
+            m_shaderProgramHandle = createProgram ( l_shaderVec );
+            
+            m_windowSizeUniform = glGetUniformLocation ( m_shaderProgramHandle, "windowSize" );            
+
         }
-        
-        if ( true == l_ret )
-        {
-            if ( false == l_shaderManagerNode.isMember ( "disable_shader_event" ) )
-            {
-                LOG4CXX_ERROR ( m_logger, "Unable to locate disable event subscriber name" );
-                l_ret = false;
-            }
-            else
-            {
-                CEventManager* lp_eventManager = CEventManager::sGetInstance();
-                
-                lp_eventManager->registerEvent ( l_shaderManagerNode["disable_shader_event"].asString().c_str(),
-                                                 this,
-                                                 sDisableShaderCallback,
-                                                 mp_disableShaderCallbackEvent 
-                                               );
-            }
-        }
-        
+
         return l_ret;
     }
 
     //-----------------------------------------------------------------------//
-    void CShaderManagerPlugin::start()
+    void CDisplayPlugin::start()
     {
+        gp_renderable->start();
     }
     
     //-----------------------------------------------------------------------//
-    void CShaderManagerPlugin::stop()
+    void CDisplayPlugin::stop()
     {
         LOG4CXX_INFO ( m_logger, "Stop" );
     }
 
     //-----------------------------------------------------------------------//
-    void CShaderManagerPlugin::sCreateShaderCallback ( void* ap_instance, void* ap_data )
+    void CDisplayPlugin::sDisplayCallback( void* ap_instance, void* ap_data )
     {
-        static_cast< CShaderManagerPlugin* >(ap_instance)->createShaderCallback ( (SShaderData*)ap_data );
+        static_cast< CDisplayPlugin*>(ap_instance)->displayCallback ( ap_data );
     }
 
     //-----------------------------------------------------------------------//
-    void CShaderManagerPlugin::createShaderCallback ( SShaderData* ap_data )
+    void CDisplayPlugin::displayCallback ( void* ap_data )
     {
-        tCompiledShaders l_compiledShaders;
+        glClearColor(0.4f, 0.0f, 0.4f, 0.0f);
+        glClear(GL_COLOR_BUFFER_BIT);
 
-        for ( int i = 0; i < ap_data->m_shaderFiles.size(); ++i )
-        {
-            tShaderFile l_file = ap_data->m_shaderFiles[i];
-            l_compiledShaders.insert ( loadShader ( l_file.first,
-                                                    l_file.second ) );
-        }
+        glUseProgram(m_shaderProgramHandle);
+        glUniform1f ( m_windowSizeUniform, m_windowSize );
 
-        m_shaderPrograms.insert ( createProgram ( l_compiledShaders ) );
-        ap_data->m_shaderTag = m_shaderPrograms.size() - 1;
-    }
+        static_cast<IRenderable*>(gp_renderable)->render(); 
 
-    //-----------------------------------------------------------------------//
-    void CShaderManagerPlugin::sDestroyProgramCallback( void* ap_instance, void* ap_data )
-    {
-        static_cast< CShaderManagerPlugin* >(ap_instance)->destroyProgramCallback ( (uint16_t*)ap_data );
-    }
-
-    //-----------------------------------------------------------------------//
-    void CShaderManagerPlugin::destroyProgramCallback( uint16_t* ap_data )
-    {
-        GLuint l_program = m_shaderPrograms [ (*ap_data) ];
-
-        glDeleteProgram ( l_program );
-
-        m_shaderPrograms [ (*ap_data) ] = 0;
-    }
-
-    //-----------------------------------------------------------------------//
-    void CShaderManagerPlugin::sEnableShaderCallback( void* ap_instance, void* ap_data )
-    {
-        static_cast< CShaderManagerPlugin* >(ap_instance)->enableShaderCallback ( (uint16_t*)ap_data );
-    }
-
-    //-----------------------------------------------------------------------//
-    void CShaderManagerPlugin::enableShaderCallback ( uint16_t* ap_data )
-    {
-        GLuint l_shaderHandle = 0;
-
-        if ( true == m_shaderPrograms.find ( (*ap_data), l_shaderHandle ) )
-        {
-            if ( 0 != l_shaderHandle &&
-                 ( 0 == m_enabledShaderProgram ||
-                   m_enabledShaderProgram != l_shaderHandle ) )
-            {
-                m_enabledShaderProgram = l_shaderHandle;
-                glUseProgram( l_shaderHandle );
-            }
-        }
-    }
-
-    //-----------------------------------------------------------------------//
-    void CShaderManagerPlugin::sDisableShaderCallback( void* ap_instance, void* ap_data )
-    {
-        static_cast< CShaderManagerPlugin* >(ap_instance)->disableShaderCallback ( (uint16_t*)ap_data );
-    }
-
-    //-----------------------------------------------------------------------//
-    void CShaderManagerPlugin::disableShaderCallback ( uint16_t* ap_data )
-    {
-        m_enabledShaderProgram = 0;
         glUseProgram(0);
+
+        glutSwapBuffers();
     }
 
     //-----------------------------------------------------------------------//
-    GLuint CShaderManagerPlugin::loadShader ( GLenum a_shaderType,
+    void CDisplayPlugin::sReshapeCallback( void* ap_instance, void* ap_data )
+    {
+        static_cast< CDisplayPlugin*>(ap_instance)->reshapeCallback ( ap_data );
+    }
+
+    //-----------------------------------------------------------------------//
+    void CDisplayPlugin::reshapeCallback ( void* ap_data )
+    {
+        SReshapeEvent* lp_event = reinterpret_cast < SReshapeEvent*>(ap_data);
+
+        glViewport(0, 0, lp_event->m_width, lp_event->m_height);
+
+        m_windowSize = lp_event->m_width;
+    }
+
+    //-----------------------------------------------------------------------//
+    GLuint CDisplayPlugin::loadShader ( GLenum a_shaderType,
                                         std::string& ar_shaderFile )
     {
         GLuint l_return = GL_FALSE;
@@ -232,7 +216,7 @@ namespace framework
     }
 
     //-----------------------------------------------------------------------//
-    GLuint CShaderManagerPlugin::createShader ( GLenum a_shaderType,
+    GLuint CDisplayPlugin::createShader ( GLenum a_shaderType,
                                           std::string& ar_shaderCode )
     {
         GLuint l_shaderHandle = glCreateShader( a_shaderType );
@@ -291,7 +275,7 @@ namespace framework
     }
 
     //-----------------------------------------------------------------------//
-    GLuint CShaderManagerPlugin::createProgram ( CShaderManagerPlugin::tShaderVec& ar_shaderVector )
+    GLuint CDisplayPlugin::createProgram ( CDisplayPlugin::tShaderVec& ar_shaderVector )
     {
         GLuint l_programHandle = glCreateProgram();
     
@@ -343,6 +327,6 @@ extern "C"
 {
     framework::IPluggable* createInstance()
     {
-        return new framework::CShaderManagerPlugin;
+        return new framework::CDisplayPlugin;
     }
 }

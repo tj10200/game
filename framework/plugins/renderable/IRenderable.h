@@ -4,7 +4,13 @@
 #include "IPluggable.h"
 #include <GL/freeglut.h>
 #include "THashable.h"
+#include <vector>
 #include "TVector.h"
+
+namespace Json
+{
+    class Value;
+};
 
 namespace framework
 {
@@ -111,6 +117,71 @@ namespace framework
              */
             static bool sVisitorFind ( IRenderable* ap_obj, uint32_t a_id, IRenderable*& apr_return );
 
+            /**
+             * Sets the static directory to use when looking for
+             * shader files
+             *
+             * @param ar_dir - the shader dir
+             */
+            void setShaderDir ( std::string& ar_dir );
+        
+        protected:
+            typedef std::vector< GLuint > tShaderVec;
+
+            /**
+             * Struct containing data about the shaders being used
+             */
+            struct SShaderData
+            {
+                std::string m_vertexShader;
+                std::string m_fragmentShader;
+            };
+            
+            /**
+             * Loads shaders from the config 
+             *
+             * @param ar_rootNode - the node containing the shader files
+             * @return bool - true if loaded and compiled successfully
+             */
+            bool loadShaders ( Json::Value& ar_rootNode );
+
+            /**
+             * Loads the shader code from a file,
+             * and uses it to create the shader
+             *
+             * @param a_shaderType - the shader type
+             * @param ar_shaderFile - the shader file
+             * @return GLuint - the shader handle
+             */
+            GLuint loadShader ( GLenum a_shaderType,
+                                std::string& ar_shaderFile );
+            
+            /**
+             * Create Shader
+             *
+             * @param a_shaderType - the shader type
+             * @param a_shaderCode - the shader function
+             * @return GLuint - the shader handle
+             */
+            GLuint createShader ( GLenum a_shaderType,
+                                  std::string& ar_shaderCode );
+
+            
+            /**
+             * Creates a shader program
+             *
+             * @param ar_shaderVector& - the shader program vector
+             * @return GLuint - the program handle
+             */
+            GLuint createProgram ( tShaderVec& ar_shaderVector );
+
+            /**
+             * Gets the virtex shader name
+             *
+             * @param ar_data - the data to populate
+             */
+            virtual void getVertextShaderName( SShaderData& ar_data ) = 0;
+
         protected:
 
             /** The vertex buffer handle **/
@@ -121,6 +192,13 @@ namespace framework
             
             /** The children to render after this object **/
             containers::TVector < IRenderable*, uint32_t > m_postChildren;
+
+            /** The Shader Program **/
+            GLuint m_shaderProgramHandle;
+
+            /** The shader dir shared across all IRenderable objects **/
+            static std::string ms_shaderDir;
+             
     };
 };
 

@@ -11,6 +11,8 @@
 #include "CPluginLoader.h"
 #include "IRenderable.h"
 
+#include "CShaderManagerPlugin.h"
+
 namespace framework
 {
     const uint32_t DISPLAY_PLUGIN_ID = 1405198146;
