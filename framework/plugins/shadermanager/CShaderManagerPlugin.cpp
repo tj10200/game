@@ -7,6 +7,8 @@
 #include <sstream>
 
 #include "CPluginLoader.h"
+#include "CShaderDB.h"
+#include "IRenderable.h"
 
 namespace framework
 {
@@ -16,12 +18,14 @@ namespace framework
     CShaderManagerPlugin::CShaderManagerPlugin()
     :   IPluggable("CShaderManagerPlugin", SHADER_MANAGER_PLUGIN_ID),
         m_enabledShaderProgram ( 0 ),
-        m_shaderPrograms ( 10, 10 )
+        mp_shaderDB ( NULL )
     {}
 
     //-----------------------------------------------------------------------//
     CShaderManagerPlugin::~CShaderManagerPlugin()
-    {}
+    { 
+        delete mp_shaderDB;
+    }
 
     //-----------------------------------------------------------------------//
     bool CShaderManagerPlugin::loadConfig ( const Json::Value& ar_node )
@@ -44,78 +48,55 @@ namespace framework
 
         if ( true == l_ret )
         {
-            if ( false == l_shaderManagerNode.isMember ( "create_shader_event" ) )
+            if ( false == l_shaderManagerNode.isMember ( "shader_db" ) )
             {
-                LOG4CXX_ERROR ( m_logger, "Unable to locate create event subscriber name" );
+                LOG4CXX_ERROR ( m_logger, "Unable to locate shader database file" );
                 l_ret = false;
             }
             else
             {
-                CEventManager* lp_eventManager = CEventManager::sGetInstance();
-                
-                lp_eventManager->registerEvent ( l_shaderManagerNode["create_shader_event"].asString().c_str(),
-                                                 this,
-                                                 sCreateShaderCallback,
-                                                 mp_createShaderCallbackEvent 
-                                               );
+                mp_shaderDB = new CShaderDB;
+
+                if ( false == ( l_ret = mp_shaderDB->initialize ( l_shaderManagerNode["shader_db"].asString() ) ) )
+                {
+                    LOG4CXX_ERROR ( m_logger, "Failed to initialize shader DB" );
+                }
             }
         }
-        
+
         if ( true == l_ret )
         {
-            if ( false == l_shaderManagerNode.isMember ( "destroy_program_event" ) )
-            {
-                LOG4CXX_ERROR ( m_logger, "Unable to locate destroy program event subscriber name" );
-                l_ret = false;
-            }
-            else
-            {
-                CEventManager* lp_eventManager = CEventManager::sGetInstance();
-                
-                lp_eventManager->registerEvent ( l_shaderManagerNode["destroy_program_event"].asString().c_str(),
-                                                 this,
-                                                 sDestroyProgramCallback,
-                                                 mp_destroyProgramCallbackEvent 
-                                               );
-            }
-        }
+            CEventManager* lp_eventManager = CEventManager::sGetInstance();
+              
+            lp_eventManager->registerEvent ( REGISTER_SHADER_EVENT,
+                                             this,
+                                             sRegisterShaderCallback,
+                                             mp_registerShaderCallbackEvent 
+                                           );
+
+            lp_eventManager->registerEvent ( DEREGISTER_SHADER_EVENT,
+                                             this,
+                                             sDeregisterShaderCallback,
+                                             mp_deregisterShaderCallbackEvent 
+                                           );
         
-        if ( true == l_ret )
-        {
-            if ( false == l_shaderManagerNode.isMember ( "enable_shader_event" ) )
-            {
-                LOG4CXX_ERROR ( m_logger, "Unable to locate enable event subscriber name" );
-                l_ret = false;
-            }
-            else
-            {
-                CEventManager* lp_eventManager = CEventManager::sGetInstance();
-                
-                lp_eventManager->registerEvent ( l_shaderManagerNode["enable_shader_event"].asString().c_str(),
-                                                 this,
-                                                 sEnableShaderCallback,
-                                                 mp_enableShaderCallbackEvent 
-                                               );
-            }
-        }
+            lp_eventManager->registerEvent ( RENDER_SHADER_EVENT,
+                                             this,
+                                             sRenderShaders,
+                                             mp_renderShadersCallbackEvent 
+                                           );
         
-        if ( true == l_ret )
-        {
-            if ( false == l_shaderManagerNode.isMember ( "disable_shader_event" ) )
-            {
-                LOG4CXX_ERROR ( m_logger, "Unable to locate disable event subscriber name" );
-                l_ret = false;
-            }
-            else
-            {
-                CEventManager* lp_eventManager = CEventManager::sGetInstance();
-                
-                lp_eventManager->registerEvent ( l_shaderManagerNode["disable_shader_event"].asString().c_str(),
-                                                 this,
-                                                 sDisableShaderCallback,
-                                                 mp_disableShaderCallbackEvent 
-                                               );
-            }
+            lp_eventManager->registerEvent ( CAPTURE_PROGRAM_HANDLE_EVENT,
+                                             this,
+                                             sCaptureShaderHandle,
+                                             mp_captureProgramIdEvent
+                                           );
+        
+            lp_eventManager->registerEvent ( CAPTURE_UNIFORM_HANDLE_EVENT,
+                                             this,
+                                             sCaptureUniformHandle,
+                                             mp_captureUniformHandleEvent
+                                           );
         }
         
         return l_ret;
@@ -133,77 +114,159 @@ namespace framework
     }
 
     //-----------------------------------------------------------------------//
-    void CShaderManagerPlugin::sCreateShaderCallback ( void* ap_instance, void* ap_data )
+    void CShaderManagerPlugin::sRegisterShaderCallback( void* ap_instance, void* ap_data )
     {
-        static_cast< CShaderManagerPlugin* >(ap_instance)->createShaderCallback ( (SShaderData*)ap_data );
+        static_cast< CShaderManagerPlugin* >(ap_instance)->registerShaderCallback ( (tShaderRegistrationEvent*)ap_data );
     }
 
     //-----------------------------------------------------------------------//
-    void CShaderManagerPlugin::createShaderCallback ( SShaderData* ap_data )
+    void CShaderManagerPlugin::registerShaderCallback ( tShaderRegistrationEvent* ap_data )
     {
-        tCompiledShaders l_compiledShaders;
+        tShaderProgramMap::iterator l_iter = m_shaderPrograms.find ( ap_data->first );
 
-        for ( int i = 0; i < ap_data->m_shaderFiles.size(); ++i )
+        if ( m_shaderPrograms.end() == l_iter )
         {
-            tShaderFile l_file = ap_data->m_shaderFiles[i];
-            l_compiledShaders.insert ( loadShader ( l_file.first,
-                                                    l_file.second ) );
-        }
+            CShaderDB::SShaderEntry* lp_shader = NULL;
+            SShaderData l_data; 
 
-        m_shaderPrograms.insert ( createProgram ( l_compiledShaders ) );
-        ap_data->m_shaderTag = m_shaderPrograms.size() - 1;
-    }
-
-    //-----------------------------------------------------------------------//
-    void CShaderManagerPlugin::sDestroyProgramCallback( void* ap_instance, void* ap_data )
-    {
-        static_cast< CShaderManagerPlugin* >(ap_instance)->destroyProgramCallback ( (uint16_t*)ap_data );
-    }
-
-    //-----------------------------------------------------------------------//
-    void CShaderManagerPlugin::destroyProgramCallback( uint16_t* ap_data )
-    {
-        GLuint l_program = m_shaderPrograms [ (*ap_data) ];
-
-        glDeleteProgram ( l_program );
-
-        m_shaderPrograms [ (*ap_data) ] = 0;
-    }
-
-    //-----------------------------------------------------------------------//
-    void CShaderManagerPlugin::sEnableShaderCallback( void* ap_instance, void* ap_data )
-    {
-        static_cast< CShaderManagerPlugin* >(ap_instance)->enableShaderCallback ( (uint16_t*)ap_data );
-    }
-
-    //-----------------------------------------------------------------------//
-    void CShaderManagerPlugin::enableShaderCallback ( uint16_t* ap_data )
-    {
-        GLuint l_shaderHandle = 0;
-
-        if ( true == m_shaderPrograms.find ( (*ap_data), l_shaderHandle ) )
-        {
-            if ( 0 != l_shaderHandle &&
-                 ( 0 == m_enabledShaderProgram ||
-                   m_enabledShaderProgram != l_shaderHandle ) )
+            if ( true == mp_shaderDB->getShaderEntry ( ap_data->first, lp_shader ) )
             {
-                m_enabledShaderProgram = l_shaderHandle;
-                glUseProgram( l_shaderHandle );
+                CShaderManagerPlugin::tShaderVec l_compiledShaders;
+
+                for ( int i = 0; i < lp_shader->m_shaderFiles.size(); ++i )
+                {
+                    std::string l_file = lp_shader->m_shaderFiles[i];
+
+                    if ( l_file != "" )
+                    {
+                        GLenum l_type = lp_shader->m_shaderTypes[i];
+
+                        l_compiledShaders.insert ( loadShader ( l_type,
+                                                                l_file) );
+                    }
+                }
+
+                tShaderRenderEvents l_newEvent;
+                l_newEvent.first = createProgram ( l_compiledShaders );
+                l_newEvent.second.push_back ( ap_data->second );
+            
+                m_shaderPrograms.insert ( std::make_pair ( ap_data->first, l_newEvent ) );
+            }
+            else
+            {
+                LOG4CXX_ERROR ( m_logger, "Failed to locate shader entry in db ( " << ap_data->first << " ) " );
+            }
+        }
+        else
+        {
+            //Shader already created. Just add IRenderable to list
+            l_iter->second.second.push_back ( ap_data->second );
+        }
+    }
+
+    //-----------------------------------------------------------------------//
+    void CShaderManagerPlugin::sDeregisterShaderCallback( void* ap_instance, void* ap_data )
+    {
+        static_cast< CShaderManagerPlugin* >(ap_instance)->deregisterShaderCallback ( (tShaderRegistrationEvent*)ap_data );
+    }
+
+    //-----------------------------------------------------------------------//
+    void CShaderManagerPlugin::deregisterShaderCallback ( tShaderRegistrationEvent* ap_data )
+    {
+        tShaderProgramMap::iterator l_iter = m_shaderPrograms.find ( ap_data->first );
+
+        //If at end, then this shader is not registered.
+        if ( m_shaderPrograms.end() != l_iter )
+        {
+            tShaderRenderEvents l_event = l_iter->second;
+            std::vector < IRenderable* >::iterator l_renderIter = l_event.second.begin();
+
+            //Find our renderable object and remove it
+            while ( l_renderIter != l_event.second.begin() )
+            {
+                if ( (*l_renderIter) == ap_data->second )
+                {
+                    l_event.second.erase ( l_renderIter );
+                    break;
+                }
+
+                ++l_renderIter;
+            }
+
+            if ( 0 == l_event.second.size() )
+            {
+                glDeleteProgram ( l_iter->second.first );
+                m_shaderPrograms.erase ( l_iter );
             }
         }
     }
 
     //-----------------------------------------------------------------------//
-    void CShaderManagerPlugin::sDisableShaderCallback( void* ap_instance, void* ap_data )
+    void CShaderManagerPlugin::sRenderShaders( void* ap_instance, void* ap_data )
     {
-        static_cast< CShaderManagerPlugin* >(ap_instance)->disableShaderCallback ( (uint16_t*)ap_data );
+        static_cast<CShaderManagerPlugin*>(ap_instance)->renderShaders ();
     }
 
     //-----------------------------------------------------------------------//
-    void CShaderManagerPlugin::disableShaderCallback ( uint16_t* ap_data )
+    void CShaderManagerPlugin::renderShaders()
     {
-        m_enabledShaderProgram = 0;
-        glUseProgram(0);
+        tShaderProgramMap::iterator l_iter = m_shaderPrograms.begin();
+        tShaderRenderEvents l_event;
+        std::vector < IRenderable* >::iterator l_renderIter;
+        IRenderable* lp_renderable = NULL;
+
+
+        while ( l_iter != m_shaderPrograms.end() )
+        {
+            l_event = l_iter->second;
+            l_renderIter = l_event.second.begin();
+            lp_renderable = NULL;
+
+            while ( l_renderIter != l_event.second.end() )
+            {
+                lp_renderable = (*l_renderIter++);
+
+                lp_renderable->render();
+
+            }
+
+            ++l_iter;
+        }
+    }
+
+    //-----------------------------------------------------------------------//
+    void CShaderManagerPlugin::sCaptureShaderHandle ( void* ap_instance, void* ap_data )
+    {
+        static_cast<CShaderManagerPlugin*>(ap_instance)->captureShaderHandle ( (SShaderProgramData*)ap_data);
+    }
+
+    //-----------------------------------------------------------------------//
+    void CShaderManagerPlugin::captureShaderHandle ( SShaderProgramData* ap_data )
+    {
+        tShaderProgramMap::iterator l_iter = m_shaderPrograms.find ( ap_data->m_name );
+
+        if ( l_iter != m_shaderPrograms.end() )
+        {
+            ap_data->m_programId = l_iter->second.first;
+        }
+        else
+        {
+            ap_data->m_programId = -1;
+        }
+
+    }
+
+    //-----------------------------------------------------------------------//
+    void CShaderManagerPlugin::sCaptureUniformHandle ( void* ap_instance, void* ap_data )
+    {
+        static_cast<CShaderManagerPlugin*>(ap_instance)->captureUniformHandle( (SShaderUniformData*)ap_data);
+    }
+
+    //-----------------------------------------------------------------------//
+    void CShaderManagerPlugin::captureUniformHandle ( SShaderUniformData* ap_data )
+    {
+        ap_data->m_uniformHandle = glGetUniformLocation ( ap_data->m_programId, 
+                                                          ap_data->m_uniformName.c_str() );
     }
 
     //-----------------------------------------------------------------------//
@@ -213,6 +276,7 @@ namespace framework
         GLuint l_return = GL_FALSE;
 
         LOG4CXX_INFO ( m_logger, "Loading Shader from File: " << ar_shaderFile );
+
         std::ifstream l_shaderFile ( ar_shaderFile, std::ios::in );
        
         if ( l_shaderFile.is_open() )
@@ -336,6 +400,7 @@ namespace framework
 
         return l_programHandle;
     }
+
 };
 
 //-----------------------------------------------------------------------//

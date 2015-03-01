@@ -15,6 +15,7 @@ include ( ${EVENT_MANAGER_DIR}/CMakeLists.txt )
 #   Includes
 ##
 include_directories ( 
+                      ${SHADER_MANAGER_DIR}
                       ${PLUGIN_LOADER_DIR}
                       ${JSONCPP_INCLUDE_DIR}
                       ${EVENT_MANAGER_DIR}
@@ -27,6 +28,7 @@ include_directories (
                       ${GLSDK_GLLOAD_INCLUDE_DIR}
                       ${RENDERABLE_PLUGIN_DIR}
                       ${CONTAINER_DIR}
+                      ${RENDERABLE_DIR}
                     )
 
 ## 
@@ -42,11 +44,16 @@ link_directories (
                     ${GLSDK_GLIMG_LIB_DIR}
                     ${GLSDK_GLLOAD_LIB_DIR}
                  )
+##Config
+configure_file ( ${CMAKE_CURRENT_LIST_DIR}/shaders.json.in
+                 ${CMAKE_CURRENT_LIST_DIR}/shaders.json )
 
 ##
 #   Source Files
 ##
-set ( SHADER_MANAGER_PLUGIN_SOURCES CShaderManagerPlugin.cpp; ) 
+set ( SHADER_MANAGER_PLUGIN_SOURCES 
+        CShaderManagerPlugin.cpp; 
+        CShaderDB.cpp; ) 
 
 prepend_path ( SHADER_MANAGER_PLUGIN_SOURCES ${CMAKE_CURRENT_LIST_DIR} )
 

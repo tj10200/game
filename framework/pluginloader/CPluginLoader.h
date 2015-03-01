@@ -40,6 +40,14 @@ namespace framework
                                 IPluggable*& apr_plugin );
         
             /**
+             * Destroys the plugin instance
+             *
+             * @param ar_library - the plugin library to destroy
+             * @return bool - true if handle found and destroyed
+             */
+            bool destroyPlugin ( const std::string& ar_library );
+        
+            /**
              * Loads config for all plugins
              * 
              * @param ar_file - the config file to load

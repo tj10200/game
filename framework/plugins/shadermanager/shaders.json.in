@@ -1,0 +1,11 @@
+{
+    "shaders" :
+    [
+        {
+            "shader_name" : "simpleShader",
+            "shader_num" : 1,
+            "vertex_shader" : "${SHADER_DIR}/shader.vert",
+            "fragment_shader" : "${SHADER_DIR}/shader.frag"
+        }
+    ]
+}

@@ -1,16 +1,21 @@
 #ifndef CShaderManagerPlugin_h
 #define CShaderManagerPlugin_h
 
+#include <string>
+#include <unordered_map>
+
 #include "IPluggable.h"
+#include "ShaderManagerCommon.h"
+
 #include "log4cxx/logger.h"
 #include "GL/freeglut.h"
-#include <string>
 #include "TVector.h"
-
 
 namespace framework
 {
     class CEvent;
+    class IRenderable;
+    class CShaderDB;
 
     class CShaderManagerPlugin: public IPluggable
     {
@@ -21,7 +26,11 @@ namespace framework
             typedef containers::TVector < tShaderFile, uint8_t > tShaderFileVec;
             typedef containers::TVector < GLuint, uint16_t > tCompiledShaders;
             typedef containers::TVector< GLuint, uint16_t > tShaderVec;
-            
+
+            /** The mapping of shader program to things that need to be rendered **/
+            typedef std::pair < GLuint, std::vector < IRenderable* > > tShaderRenderEvents;
+            typedef std::unordered_map < std::string, tShaderRenderEvents > tShaderProgramMap;
+
             struct SShaderData 
             {
                 /**
@@ -64,40 +73,52 @@ namespace framework
              * Stops the object
              */
             virtual void stop();
-        
-            /**
-             * Create shader callback function used to create a new shader
-             * program
-             *
-             * @param ap_data - expects a std::vector of pairs of shader files to link into
-             *  a shader program
-             */
-            static void sCreateShaderCallback ( void* ap_instance,
-                                                void* ap_data );
-            void createShaderCallback ( SShaderData* ap_data );
-            
-            /**
-             * Destroy shader program callback function. Destroys a shader program
-             *
-             * @param ap_data - expects an id of the shader being destroyed
-             */
-            static void sDestroyProgramCallback ( void* ap_instance,
-                                                  void* ap_data );
-            void destroyProgramCallback ( uint16_t* ap_data );
-            
-            /**
-             * The enable shader callback function
-             */
-            static void sEnableShaderCallback ( void* ap_instance, 
-                                                void* ap_data );
-            void enableShaderCallback ( uint16_t* ap_data );
 
             /**
-             * The disable shader callback function
+             * Register an IRenderable object against a shader program
+             *
+             * @param ap_instance - the shader manager instance
+             * @param ap_data - a tShaderRegistrationEvent
              */
-            static void sDisableShaderCallback ( void* ap_instance, 
-                                                 void* ap_data );
-            void disableShaderCallback ( uint16_t* ap_data );
+            static void sRegisterShaderCallback ( void* ap_instance,
+                                                  void* ap_data );
+            void registerShaderCallback ( tShaderRegistrationEvent* ap_data );
+            
+            /**
+             * Deregister an IRenderable object from a shader program
+             *
+             * @param ap_instance - the shader manager instance
+             * @param ap_data - a tShaderRegistrationEvent
+             */
+            static void sDeregisterShaderCallback ( void* ap_instance,
+                                                    void* ap_data );
+            void deregisterShaderCallback ( tShaderRegistrationEvent* ap_data );
+
+            /**
+             * Render shaders
+             *
+             * @param ap_instance - the shader manader instance
+             * @param ap_data - NULL
+             */
+            static void sRenderShaders ( void* ap_instance, void* ap_data );
+            void renderShaders();
+            
+            /**
+             * Captures the program ID 
+             *
+             * @param ap_data - struct with shader name. returns shader program id
+             */
+            static void sCaptureShaderHandle ( void* ap_instance, void* ap_data );
+            void captureShaderHandle ( SShaderProgramData* ap_data );
+
+            /**
+             * Captures a uniform handle for a single shader
+             *
+             * @param ap_data - struct with the program id and the uniform name.
+             * function will populate the handle
+             */
+            static void sCaptureUniformHandle ( void* ap_instance, void* ap_data );
+            void captureUniformHandle ( SShaderUniformData* ap_data );
 
         private:
 
@@ -133,29 +154,29 @@ namespace framework
 
         private:
 
-            /** The Create Shader Callback Event object **/
-            CEvent* mp_createShaderCallbackEvent;
-            
-            /** The Destroy Shader Callback Event object **/
-            CEvent* mp_destroyShaderCallbackEvent;
-            
-            /** The Destroy Program Callback Event object **/
-            CEvent* mp_destroyProgramCallbackEvent;
-            
-            /** The Enable shader Callback Event object **/
-            CEvent* mp_enableShaderCallbackEvent;
+            /** The Register Shader Callback Event object **/
+            CEvent* mp_registerShaderCallbackEvent;
 
-            /** The Disable shader Callback Event object **/
-            CEvent* mp_disableShaderCallbackEvent;
-            
+            /** The Deregister Shader Callback Event Object **/
+            CEvent* mp_deregisterShaderCallbackEvent;
+
+            /** The Render Shaders Callback Event Object **/
+            CEvent* mp_renderShadersCallbackEvent;
+
+            /** The Capture Program ID Callback Event Object **/
+            CEvent* mp_captureProgramIdEvent;
+
+            /** The Capture Uniform Handle Callback Event Object **/
+            CEvent* mp_captureUniformHandleEvent;
+
             /** The currently enabled shader program **/
             GLuint m_enabledShaderProgram;
 
-            /** The Shader Program **/
-            containers::TVector <GLuint, uint16_t > m_shaderPrograms;
-             
-            /** The window size **/
-            uint16_t m_windowSize;
+            /** The hash map of shader programs **/
+            tShaderProgramMap m_shaderPrograms;
+
+            /** The shader DB **/
+            CShaderDB* mp_shaderDB;
     };
 };
  

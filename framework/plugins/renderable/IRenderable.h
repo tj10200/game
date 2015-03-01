@@ -6,6 +6,7 @@
 #include "THashable.h"
 #include <vector>
 #include "TVector.h"
+#include "ShaderManagerCommon.h"
 
 namespace Json
 {
@@ -35,6 +36,11 @@ namespace framework
              * Renders the object
              */
             virtual void render() =0;
+
+            /**
+             * set uniform data
+             */
+            virtual void updateUniforms();
 
             /**
              * Inherited from base class
@@ -129,58 +135,12 @@ namespace framework
             typedef std::vector< GLuint > tShaderVec;
 
             /**
-             * Struct containing data about the shaders being used
-             */
-            struct SShaderData
-            {
-                std::string m_vertexShader;
-                std::string m_fragmentShader;
-            };
-            
-            /**
              * Loads shaders from the config 
              *
              * @param ar_rootNode - the node containing the shader files
              * @return bool - true if loaded and compiled successfully
              */
             bool loadShaders ( Json::Value& ar_rootNode );
-
-            /**
-             * Loads the shader code from a file,
-             * and uses it to create the shader
-             *
-             * @param a_shaderType - the shader type
-             * @param ar_shaderFile - the shader file
-             * @return GLuint - the shader handle
-             */
-            GLuint loadShader ( GLenum a_shaderType,
-                                std::string& ar_shaderFile );
-            
-            /**
-             * Create Shader
-             *
-             * @param a_shaderType - the shader type
-             * @param a_shaderCode - the shader function
-             * @return GLuint - the shader handle
-             */
-            GLuint createShader ( GLenum a_shaderType,
-                                  std::string& ar_shaderCode );
-
-            
-            /**
-             * Creates a shader program
-             *
-             * @param ar_shaderVector& - the shader program vector
-             * @return GLuint - the program handle
-             */
-            GLuint createProgram ( tShaderVec& ar_shaderVector );
-
-            /**
-             * Gets the virtex shader name
-             *
-             * @param ar_data - the data to populate
-             */
-            virtual void getVertextShaderName( SShaderData& ar_data ) = 0;
 
         protected:
 

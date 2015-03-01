@@ -29,6 +29,7 @@ include_directories (
                       ${GLSDK_GLLOAD_INCLUDE_DIR}
                       ${FRAMEWORK_COMMON_DIR}
                       ${CONTAINER_DIR}
+                      ${SHADER_MANAGER_DIR}
                     )
 
 ## 

@@ -79,6 +79,33 @@ namespace framework
     }
 
     //-----------------------------------------------------------------------//
+    bool CPluginLoader::destroyPlugin ( const std::string& ar_library )
+    {
+        bool l_ret = true;
+
+        tLibraryMap::iterator l_find = m_handles.find ( ar_library );
+
+        //First clear any errors
+        dlerror();
+
+        if ( l_find != m_handles.end() )
+        {
+            //Not a new library. Load the symbol using the found handle
+            void* lp_handle = reinterpret_cast<void*>(l_find->second);
+
+            dlclose ( lp_handle );
+
+            m_handles.erase ( l_find );
+        }
+        else
+        {
+            l_ret = false;
+        }
+
+        return l_ret;
+    }
+
+    //-----------------------------------------------------------------------//
     bool CPluginLoader::loadConfig ( std::string& ar_file )
     {
         bool l_ret = true;

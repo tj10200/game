@@ -1,5 +1,6 @@
 #include "CDisplayPlugin.h"
 #include "CEventManager.h"
+#include "CEvent.h"
 
 #include "json/json.h"
 #include <GL/freeglut.h>
@@ -10,8 +11,7 @@
 
 #include "CPluginLoader.h"
 #include "IRenderable.h"
-
-#include "CShaderManagerPlugin.h"
+#include "ShaderManagerCommon.h"
 
 namespace framework
 {
@@ -20,14 +20,16 @@ namespace framework
 
     //-----------------------------------------------------------------------//
     CDisplayPlugin::CDisplayPlugin()
-    :   IPluggable("CDisplayPlugin", DISPLAY_PLUGIN_ID),
+    :   IRenderable("CDisplayPlugin", DISPLAY_PLUGIN_ID),
         m_windowSizeUniform(0),
         m_windowSize(0)
     {}
 
     //-----------------------------------------------------------------------//
     CDisplayPlugin::~CDisplayPlugin()
-    {}
+    {
+        delete mp_renderEvent;
+    }
 
     //-----------------------------------------------------------------------//
     bool CDisplayPlugin::loadConfig ( const Json::Value& ar_node )
@@ -101,46 +103,24 @@ namespace framework
             }   
         }
         
-        //Now load the shader programs
-        tShaderVec l_shaderVec;
+        if ( true == l_ret )
+        {
+            mp_renderEvent = new CEvent ( RENDER_SHADER_EVENT );
+        }
 
         if ( true == l_ret )
         {
-            if ( false == l_displayNode.isMember ( "vertex_shader" ) )
+            if ( false == l_displayNode.isMember ( "shader_name" ) )
             {
-                LOG4CXX_ERROR ( m_logger, "Unable to locate display vertex shader node" );
+                LOG4CXX_ERROR ( m_logger, "Unable to locate shader node" );
                 l_ret = false;
             }
             else
             {
-                std::string l_vertexShader = l_displayNode["vertex_shader"].asString();
-                l_shaderVec.push_back ( loadShader( GL_VERTEX_SHADER,
-                                                    l_vertexShader ) );
+                m_shaderName = l_displayNode["shader_name"].asString();
             }
         }
 
-        if ( true == l_ret )
-        {
-            if ( false == l_displayNode.isMember ( "frag_shader" ) )
-            {
-                LOG4CXX_ERROR ( m_logger, "Unable to locate display fragment shader node" );
-                l_ret = false;
-            }
-            else
-            {
-                std::string l_fragShader = l_displayNode["frag_shader"].asString();
-                l_shaderVec.push_back ( loadShader( GL_FRAGMENT_SHADER,
-                                                    l_fragShader ) );
-            }
-        }
-        
-        if ( true == l_ret )
-        {
-            m_shaderProgramHandle = createProgram ( l_shaderVec );
-            
-            m_windowSizeUniform = glGetUniformLocation ( m_shaderProgramHandle, "windowSize" );            
-
-        }
 
         return l_ret;
     }
@@ -149,6 +129,32 @@ namespace framework
     void CDisplayPlugin::start()
     {
         gp_renderable->start();
+
+        tShaderRegistrationEvent l_shaderEvent;
+        l_shaderEvent.first = m_shaderName;
+        l_shaderEvent.second = this;
+
+        CEvent l_registerShader ( REGISTER_SHADER_EVENT );
+        CEvent l_captureProgram ( CAPTURE_PROGRAM_HANDLE_EVENT );
+        CEvent l_captureUniform ( CAPTURE_UNIFORM_HANDLE_EVENT );
+
+        //First load and compile the shader
+        CEventManager::sGetInstance()->publishEvent ( &l_registerShader, (void*)(&l_shaderEvent) );
+
+        //Get the program id from the shader manader
+        SShaderProgramData l_programId;
+        l_programId.m_name = m_shaderName;
+        CEventManager::sGetInstance()->publishEvent ( &l_captureProgram, (void*)(&l_programId) );
+        m_shaderProgramHandle = l_programId.m_programId;
+
+        //Get the window size uniform from the shader manager
+        SShaderUniformData l_uniformId;
+        l_uniformId.m_programId = m_shaderProgramHandle;
+        l_uniformId.m_uniformName = "windowSize";
+
+        CEventManager::sGetInstance()->publishEvent ( &l_captureUniform, (void*)(&l_uniformId) );
+        m_windowSizeUniform = l_uniformId.m_uniformHandle;
+
     }
     
     //-----------------------------------------------------------------------//
@@ -166,15 +172,11 @@ namespace framework
     //-----------------------------------------------------------------------//
     void CDisplayPlugin::displayCallback ( void* ap_data )
     {
-        glClearColor(0.4f, 0.0f, 0.4f, 0.0f);
+        glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
         glClear(GL_COLOR_BUFFER_BIT);
 
-        glUseProgram(m_shaderProgramHandle);
-        glUniform1f ( m_windowSizeUniform, m_windowSize );
+        CEventManager::sGetInstance()->publishEvent ( mp_renderEvent, NULL );
 
-        static_cast<IRenderable*>(gp_renderable)->render(); 
-
-        glUseProgram(0);
 
         glutSwapBuffers();
     }
@@ -196,134 +198,13 @@ namespace framework
     }
 
     //-----------------------------------------------------------------------//
-    GLuint CDisplayPlugin::loadShader ( GLenum a_shaderType,
-                                        std::string& ar_shaderFile )
-    {
-        GLuint l_return = GL_FALSE;
-
-        LOG4CXX_INFO ( m_logger, "Loading Shader from File: " << ar_shaderFile );
-        std::ifstream l_shaderFile ( ar_shaderFile, std::ios::in );
-       
-        if ( l_shaderFile.is_open() )
-        {
-            std::stringstream l_stream;
-            std::string l_shaderCode;
-
-            l_stream << l_shaderFile.rdbuf();
-
-            l_shaderFile.close();
-            l_shaderCode = l_stream.str();
-
-            l_return = createShader ( a_shaderType, l_shaderCode );
-        }
-
-        return l_return;
-    }
+    void CDisplayPlugin::render()
+    {}
 
     //-----------------------------------------------------------------------//
-    GLuint CDisplayPlugin::createShader ( GLenum a_shaderType,
-                                          std::string& ar_shaderCode )
+    void CDisplayPlugin::updateUniforms()
     {
-        GLuint l_shaderHandle = glCreateShader( a_shaderType );
-
-        LOG4CXX_INFO ( m_logger, "Created Shader Handle : " << l_shaderHandle );
-
-        const char *lp_shaderCode = ar_shaderCode.c_str();
-
-        glShaderSource( l_shaderHandle, 1, &lp_shaderCode, NULL);
-
-        LOG4CXX_DEBUG ( m_logger, "Loaded Shader Source: \n" << ar_shaderCode );
-
-        glCompileShader( l_shaderHandle );
-    
-        GLint l_status;
-    
-        glGetShaderiv( l_shaderHandle, GL_COMPILE_STATUS, &l_status);
-
-        LOG4CXX_INFO ( m_logger, "Compiled shader. Checking Status " <<
-                                 "[status = " << l_status << "] " <<
-                                 "[GL_FALSE = " << (uint32_t)GL_FALSE << "] " );
-    
-        if ( l_status == GL_FALSE)
-        {
-            GLint l_infoLogLength;
-            glGetShaderiv(l_shaderHandle, GL_INFO_LOG_LENGTH, &l_infoLogLength);
-    
-            GLchar *lp_strInfoLog = new GLchar[l_infoLogLength + 1];
-    
-            glGetShaderInfoLog(l_shaderHandle, l_infoLogLength, NULL, lp_strInfoLog);
-    
-            const char *lp_strShaderType = NULL;
-    
-            switch( a_shaderType )
-            {
-                case GL_VERTEX_SHADER: lp_strShaderType = "vertex"; break;
-                case GL_GEOMETRY_SHADER: lp_strShaderType = "geometry"; break;
-                case GL_FRAGMENT_SHADER: lp_strShaderType = "fragment"; break;
-    
-            }
-    
-            LOG4CXX_ERROR ( m_logger, "Compile failure in " <<
-                                      std::string(lp_strShaderType) <<
-                                      " shader: " <<
-                                      lp_strInfoLog );
-
-            delete[] lp_strInfoLog;
-        }
-        else
-        {
-            LOG4CXX_DEBUG ( m_logger, "Created Shader [" << l_shaderHandle << "]" << ": " << 
-                                     ar_shaderCode );                        
-        }
-
-        return l_shaderHandle;
-    }
-
-    //-----------------------------------------------------------------------//
-    GLuint CDisplayPlugin::createProgram ( CDisplayPlugin::tShaderVec& ar_shaderVector )
-    {
-        GLuint l_programHandle = glCreateProgram();
-    
-        LOG4CXX_INFO ( m_logger, "Attaching Shaders to Shader program" );
-        for(size_t i = 0; i < ar_shaderVector.size(); ++i )
-        {
-            glAttachShader( l_programHandle, ar_shaderVector[i]);
-        } 
-    
-        LOG4CXX_INFO ( m_logger, "Linking shader program" );
-        glLinkProgram(l_programHandle);
-    
-        GLint l_status;
-    
-        glGetProgramiv (l_programHandle, GL_LINK_STATUS, &l_status);
-    
-        if (l_status == GL_FALSE)
-        {
-            GLint l_infoLogLength;
-    
-            glGetProgramiv( l_programHandle, GL_INFO_LOG_LENGTH, &l_infoLogLength);
-    
-            GLchar *lp_strInfoLog = new GLchar[l_infoLogLength + 1];
-    
-            glGetProgramInfoLog( l_programHandle, l_infoLogLength, NULL, lp_strInfoLog);
-    
-            LOG4CXX_ERROR ( m_logger, "Linker failure: " << std::string ( lp_strInfoLog ) );
-    
-            delete[] lp_strInfoLog;
-        }
-        else
-        {
-            LOG4CXX_INFO ( m_logger, "Shader program created: " << l_programHandle );
-        }
-    
-        LOG4CXX_INFO ( m_logger, "Detaching Shaders from Shader program" );
-        for(size_t i = 0; i < ar_shaderVector.size(); ++i )
-        {
-            glDetachShader( l_programHandle, ar_shaderVector[i]);
-            glDeleteShader( ar_shaderVector[i] );
-        } 
-
-        return l_programHandle;
+        glUniform1f ( m_windowSizeUniform, m_windowSize );
     }
 };
 

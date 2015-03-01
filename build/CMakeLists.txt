@@ -93,6 +93,7 @@ set ( FRAMEWORK_DIR ${GAME_ROOT_DIR}/framework )
 set ( FRAMEWORK_COMMON_DIR ${FRAMEWORK_DIR}/common )
 set ( PLUGIN_LOADER_DIR ${FRAMEWORK_DIR}/pluginloader )
 set ( EVENT_MANAGER_DIR ${FRAMEWORK_DIR}/eventmanager )
+set ( SHADER_DIR ${FRAMEWORK_DIR}/shaders )
 
 ###########################################################
 #       Plugins
@@ -102,11 +103,14 @@ set ( GL_MANAGER_DIR ${FRAMEWORK_PLUGINS_DIR}/glmanager )
 set ( DISPLAY_PLUGIN_DIR ${FRAMEWORK_PLUGINS_DIR}/display )
 set ( KEYBOARD_PLUGIN_DIR ${FRAMEWORK_PLUGINS_DIR}/keyboard )
 set ( RENDERABLE_DIR ${FRAMEWORK_PLUGINS_DIR}/renderable )
+set ( SHADER_MANAGER_DIR ${FRAMEWORK_PLUGINS_DIR}/shadermanager)
+set ( SCENE_MANAGER_DIR ${FRAMEWORK_PLUGINS_DIR}/scenemanager)
 set ( RENDERABLE_PLUGINS_DIR ${RENDERABLE_DIR}/plugins )
 
 ###########################################################
 #      COntainers 
 ###########################################################
 set ( CONTAINER_DIR ${GAME_ROOT_DIR}/containers )
+
 
 endif()

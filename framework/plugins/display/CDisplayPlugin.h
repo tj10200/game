@@ -1,7 +1,7 @@
 #ifndef CDisplayPlugin_h
 #define CDisplayPlugin_h
 
-#include "IPluggable.h"
+#include "IRenderable.h"
 #include "log4cxx/logger.h"
 #include "GL/freeglut.h"
 #include <string>
@@ -10,10 +10,9 @@ namespace framework
 {
     class CEvent;
 
-    class CDisplayPlugin: public IPluggable
+    class CDisplayPlugin: public IRenderable
     {
         public:
-            typedef std::vector< GLuint > tShaderVec;
 
             /**
              * Constructor
@@ -45,7 +44,6 @@ namespace framework
              */
             virtual void stop();
         
-            
             /**
              * The display callback function
              */
@@ -60,36 +58,15 @@ namespace framework
                                            void* ap_data );
             void reshapeCallback ( void* ap_data );
 
-        private:
             /**
-             * Loads the shader code from a file,
-             * and uses it to create the shader
-             *
-             * @param a_shaderType - the shader type
-             * @param ar_shaderFile - the shader file
-             * @return GLuint - the shader handle
+             * @inherited from base
              */
-            GLuint loadShader ( GLenum a_shaderType,
-                                std::string& ar_shaderFile );
-            
-            /**
-             * Create Shader
-             *
-             * @param a_shaderType - the shader type
-             * @param a_shaderCode - the shader function
-             * @return GLuint - the shader handle
-             */
-            GLuint createShader ( GLenum a_shaderType,
-                                  std::string& ar_shaderCode );
+            virtual void render();
 
-            
             /**
-             * Creates a shader program
-             *
-             * @param ar_shaderVector& - the shader program vector
-             * @return GLuint - the program handle
+             * @inherited from base
              */
-            GLuint createProgram ( tShaderVec& ar_shaderVector );
+            virtual void updateUniforms();
 
         private:
 
@@ -99,6 +76,9 @@ namespace framework
             /** The Reshape Callback Event object **/
             CEvent* mp_reshapeCallbackEvent;
 
+            /** The Render Callback Event object for the shader manager **/
+            CEvent* mp_renderEvent;
+
             /** The Shader Program **/
             GLuint m_shaderProgramHandle;
              
@@ -107,6 +87,9 @@ namespace framework
 
             /** The window size **/
             uint16_t m_windowSize;
+
+            /** The shader name **/
+            std::string m_shaderName;
     };
 };
  

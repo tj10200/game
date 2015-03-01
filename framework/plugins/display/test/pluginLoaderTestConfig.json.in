@@ -24,6 +24,13 @@
             }
         },
         {
+            "library" : "${FRAMEWORK_DIR}/plugins/shadermanager/libshadermanagerplugin.so",
+            "shader_manager" :
+            {
+                "shader_db" : "${FRAMEWORK_DIR}/plugins/shadermanager/shaders.json"
+            }
+        },
+        {
             "library" : "${FRAMEWORK_DIR}/plugins/display/libdisplayplugin.so",
             "display" :
             {
@@ -31,7 +38,8 @@
                 "reshape_event" : "reshapeEvent",
                 "vertex_shader" : "${FRAMEWORK_DIR}/plugins/display/test/vertexShader.vert",
                 "frag_shader" : "${FRAMEWORK_DIR}/plugins/display/test/gradiantShader.frag",
-                "renderable_plugin" : "${FRAMEWORK_DIR}/plugins/renderable/plugins/libsimpleanimatabletriangleplugin.so"
+                "renderable_plugin" : "${FRAMEWORK_DIR}/plugins/renderable/plugins/libsimpleanimatabletriangleplugin.so",
+                "shader_name" : "simpleShader"
             }
         },
         {

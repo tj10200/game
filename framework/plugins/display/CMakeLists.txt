@@ -27,6 +27,7 @@ include_directories (
                       ${GLSDK_GLIMG_INCLUDE_DIR}
                       ${GLSDK_GLLOAD_INCLUDE_DIR}
                       ${RENDERABLE_PLUGIN_DIR}
+                      ${SHADER_MANAGER_DIR}
                     )
 
 ## 
