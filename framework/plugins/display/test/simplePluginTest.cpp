@@ -24,7 +24,7 @@ TEST ( PluginTest, main)
     EXPECT_TRUE ( lp_loader->loadConfig ( l_configFile ) );
     framework::CPluginLoader::tPluginVector l_plugins = lp_loader->getPlugins();
 
-    EXPECT_EQ ( l_plugins.size(), 4 );
+    EXPECT_EQ ( l_plugins.size(), 5 );
     EXPECT_TRUE ( false == lp_loader->getPlugin( 3, lp_searchPlugin ) );
     EXPECT_TRUE ( true == lp_loader->getPlugin( 1404222126, lp_searchPlugin ) );
     EXPECT_TRUE ( NULL != lp_searchPlugin );

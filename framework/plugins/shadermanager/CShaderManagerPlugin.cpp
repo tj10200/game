@@ -222,6 +222,8 @@ namespace framework
             l_renderIter = l_event.second.begin();
             lp_renderable = NULL;
 
+            glUseProgram( l_event.first );
+                
             while ( l_renderIter != l_event.second.end() )
             {
                 lp_renderable = (*l_renderIter++);
@@ -232,6 +234,9 @@ namespace framework
 
             ++l_iter;
         }
+
+        glutSwapBuffers();
+        glUseProgram(0);
     }
 
     //-----------------------------------------------------------------------//

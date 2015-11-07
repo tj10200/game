@@ -177,8 +177,6 @@ namespace framework
 
         CEventManager::sGetInstance()->publishEvent ( mp_renderEvent, NULL );
 
-
-        glutSwapBuffers();
     }
 
     //-----------------------------------------------------------------------//
@@ -199,7 +197,10 @@ namespace framework
 
     //-----------------------------------------------------------------------//
     void CDisplayPlugin::render()
-    {}
+    {
+        glUniform1f ( m_windowSizeUniform, m_windowSize );
+        static_cast<IRenderable*>(gp_renderable)->render();
+    }
 
     //-----------------------------------------------------------------------//
     void CDisplayPlugin::updateUniforms()

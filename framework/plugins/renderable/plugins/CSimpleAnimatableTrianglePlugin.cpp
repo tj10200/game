@@ -68,7 +68,7 @@ namespace framework
             for ( int i = 0; i < 6; ++i )
                 *(ms_vertexData + (i * 4) ) += (ls_updateAmount * ls_direction );
 
-            ls_updateTimeUs = ar_elapsedTime;
+            ls_updateTimeUs = ar_elapsedSeconds;
 
             glutPostRedisplay();
         }

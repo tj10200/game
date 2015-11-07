@@ -11,6 +11,7 @@ cmake_policy ( SET CMP0015 NEW )
 include ( ${CMAKE_CURRENT_LIST_DIR}/../../../build/CMakeLists.txt )
 include ( ${EVENT_MANAGER_DIR}/CMakeLists.txt )
 include ( ${RENDERABLE_DIR}/CMakeLists.txt )
+include ( ${SHADER_MANAGER_DIR}/CMakeLists.txt )
 
 ##
 #   Includes
@@ -64,7 +65,7 @@ set ( DISPLAY_PLUGIN_LIBS log4cxx;
                       GL
                       GLU
                       eventmanager;
-                      simpletriangleplugin
+                      renderablecommon 
     )
 ##
 # Targets

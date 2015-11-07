@@ -10,6 +10,7 @@ cmake_policy ( SET CMP0015 NEW )
 ##
 include ( ${CMAKE_CURRENT_LIST_DIR}/../../../../build/CMakeLists.txt )
 include ( ${EVENT_MANAGER_DIR}/CMakeLists.txt )
+include ( ../CMakeLists.txt )
 
 ##
 #   Includes
@@ -28,6 +29,8 @@ include_directories (
                       ${GLSDK_GLIMG_INCLUDE_DIR}
                       ${GLSDK_GLLOAD_INCLUDE_DIR}
                       ${FRAMEWORK_COMMON_DIR}
+                      ${RENDERABLE_DIR}
+                      ${CONTAINER_DIR}
                     )
 
 ## 
@@ -57,6 +60,7 @@ set ( RENDERABLE_PLUGIN_LIBS log4cxx;
                       GL
                       GLU
                       eventmanager;
+                      renderablecommon
     )
 ##
 # Targets

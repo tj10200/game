@@ -1,7 +1,7 @@
 cmake_minimum_required ( VERSION 2.8 )
 
-if ( NOT DEFINED RENDERABLE_PLUGIN )
-set ( RENDERABLE_PLUGIN 1 )
+if ( NOT DEFINED RENDERABLE_COMMON )
+set ( RENDERABLE_COMMON 1 )
 
 cmake_policy ( SET CMP0015 NEW )
 
@@ -73,13 +73,13 @@ set ( RENDERABLE_PLUGIN_LIBS log4cxx;
 # Targets
 ##
 set ( CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_LIST_DIR} )
-add_library ( simpletriangleplugin SHARED ${RENDERABLE_PLUGIN_SOURCES} )
+add_library ( renderablecommon SHARED ${RENDERABLE_PLUGIN_SOURCES} )
 
 add_definitions ( -DGL_GLEXT_PROTOTYPES )
 
 ##
 # Linker Command
 ##
-target_link_libraries ( simpletriangleplugin ${RENDERABLE_PLUGIN_LIBS} )
+target_link_libraries ( renderablecommon ${RENDERABLE_PLUGIN_LIBS} )
 
 endif()
