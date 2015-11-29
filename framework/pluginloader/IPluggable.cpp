@@ -1,5 +1,6 @@
 #include "IPluggable.h"
 #include "json/json.h"
+#include <stdlib.h>
 
 namespace framework
 {
@@ -9,8 +10,10 @@ namespace framework
     :   m_logger ( log4cxx::Logger::getLogger( ap_name ) ),
         m_rootNode ( "" ),
         m_name ( ap_name ),
-        m_id( a_id )
-    {}
+        m_id( a_id ),
+        m_instanceId ( 0 )
+    {
+    }
 
     //-----------------------------------------------------------------------//
     IPluggable::~IPluggable()
@@ -28,9 +31,21 @@ namespace framework
     }
 
     //-----------------------------------------------------------------------//
-    const uint32_t IPluggable::getId()
+    uint32_t IPluggable::getId() const
     {
         return m_id;
+    }
+
+    //-----------------------------------------------------------------------//
+    void IPluggable::setInstanceId( uint32_t a_id )
+    {
+        m_instanceId = a_id;
+    }
+
+    //-----------------------------------------------------------------------//
+    uint32_t IPluggable::getInstanceId() const
+    {
+        return m_instanceId;
     }
 };
 

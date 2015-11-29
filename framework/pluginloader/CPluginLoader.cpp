@@ -1,6 +1,7 @@
 #include "CPluginLoader.h"
 
 #include "IPluggable.h"
+#include "CLookupPluggable.h"
 #include "json/json.h"
 #include <dlfcn.h>
 #include <fstream>
@@ -28,6 +29,7 @@ namespace framework
         
         char* lp_errors = NULL;
         void* lp_handle = 0;
+        SLoadedPlugins* lp_newInstance = NULL;
 
         tLibraryMap::iterator l_find = m_handles.find ( ar_library );
 
@@ -37,15 +39,19 @@ namespace framework
         if ( l_find != m_handles.end() )
         {
             //Not a new library. Load the symbol using the found handle
-            lp_handle = reinterpret_cast<void*>(l_find->second);
+            lp_newInstance = l_find->second;
+            lp_handle = (void *)(lp_newInstance->m_handle);
         }
         else
         {
             //Open up the library
             lp_handle = dlopen ( ar_library.c_str(), RTLD_LAZY );
 
+            lp_newInstance = new SLoadedPlugins;
+            lp_newInstance->m_handle = (uint64_t)lp_handle;
+
             //Library either found or opened successfully
-            m_handles.insert ( make_pair ( ar_library, (uint64_t)lp_handle ) );
+            m_handles.insert ( make_pair ( ar_library, lp_newInstance ) );
             
         }        
 
@@ -71,7 +77,11 @@ namespace framework
                 apr_plugin = (*l_loader)();
                 
                 //And save the pointer for later
-                m_plugins.push_back ( apr_plugin );
+                while ( false == lp_newInstance->m_loadedPlugins.insert ( apr_plugin ).second )
+                {
+                    apr_plugin->setInstanceId( apr_plugin->getInstanceId() + 1 );
+                }
+                m_plugins.insert ( apr_plugin );
             }
         }
 
@@ -79,7 +89,7 @@ namespace framework
     }
 
     //-----------------------------------------------------------------------//
-    bool CPluginLoader::destroyPlugin ( const std::string& ar_library )
+    bool CPluginLoader::destroyPlugins ( const std::string& ar_library )
     {
         bool l_ret = true;
 
@@ -91,11 +101,73 @@ namespace framework
         if ( l_find != m_handles.end() )
         {
             //Not a new library. Load the symbol using the found handle
-            void* lp_handle = reinterpret_cast<void*>(l_find->second);
+            SLoadedPlugins* lp_plugins = l_find->second;
+            void* lp_handle = reinterpret_cast<void*>(lp_plugins->m_handle);
+
+            tPluginSet::iterator l_iter = lp_plugins->m_loadedPlugins.begin();
+
+            while ( l_iter != lp_plugins->m_loadedPlugins.end() )
+            {
+                m_plugins.erase ( (*l_iter) );
+
+                delete ( *l_iter );
+                ++l_iter;
+            }
 
             dlclose ( lp_handle );
 
             m_handles.erase ( l_find );
+        }
+        else
+        {
+            l_ret = false;
+        }
+
+        return l_ret;
+    }
+
+    //-----------------------------------------------------------------------//
+    bool CPluginLoader::destroyPlugin ( const std::string& ar_library,
+                                        IPluggable* ap_inst )
+    {
+        bool l_ret = true;
+
+        if ( NULL == ap_inst )
+        {
+            return false;
+        }
+
+        tLibraryMap::iterator l_find = m_handles.find ( ar_library );
+
+        //First clear any errors
+        dlerror();
+
+        if ( l_find != m_handles.end() )
+        {
+            //Not a new library. Load the symbol using the found handle
+            SLoadedPlugins* lp_plugins = l_find->second;
+            void* lp_handle = reinterpret_cast<void*>(lp_plugins->m_handle);
+
+            tPluginSet::iterator l_findplugin = lp_plugins->m_loadedPlugins.find ( ap_inst );
+
+            if ( l_findplugin != lp_plugins->m_loadedPlugins.end() )
+            {
+                tPluginSet::iterator l_globalplugin = m_plugins.find ( ap_inst );
+                if ( l_globalplugin != m_plugins.end() )
+                {
+                    m_plugins.erase( l_globalplugin );
+                }
+
+                delete ( *l_findplugin );
+                lp_plugins->m_loadedPlugins.erase ( l_findplugin );
+            }
+
+            if ( 0 == lp_plugins->m_loadedPlugins.size() )
+            {
+                dlclose ( lp_handle );
+
+                m_handles.erase ( l_find );
+            }
         }
         else
         {
@@ -202,7 +274,7 @@ namespace framework
     //-----------------------------------------------------------------------//
     void CPluginLoader::startPlugins()
     {
-        tPluginVector::iterator l_pluginIter = m_plugins.begin();
+        tPluginSet::iterator l_pluginIter = m_plugins.begin();
 
         while ( l_pluginIter != m_plugins.end() )
         {
@@ -218,7 +290,7 @@ namespace framework
     //-----------------------------------------------------------------------//
     void CPluginLoader::stopPlugins()
     {
-        tPluginVector::iterator l_pluginIter = m_plugins.begin();
+        tPluginSet::iterator l_pluginIter = m_plugins.begin();
 
         while ( l_pluginIter != m_plugins.end() )
         {
@@ -232,32 +304,28 @@ namespace framework
     }
 
     //-----------------------------------------------------------------------//
-    const CPluginLoader::tPluginVector& CPluginLoader::getPlugins()
+    const CPluginLoader::tPluginSet& CPluginLoader::getPlugins()
     {
         return m_plugins;
     }
 
     //-----------------------------------------------------------------------//
     bool CPluginLoader::getPlugin ( const uint32_t a_id,
+                                    const uint32_t a_instId,
                                     IPluggable*& apr_plugin )
     {
         bool l_ret = false;
     
-        tPluginVector::iterator l_pluginIter = m_plugins.begin();
+        CLookupPluggable l_lookup;
+        l_lookup.setId ( a_id );
+        l_lookup.setInstanceId ( a_instId );
+
+        tPluginSet::iterator l_pluginIter = m_plugins.find( &l_lookup );
         
-        while ( l_pluginIter != m_plugins.end() &&
-                false == l_ret )
+        if ( l_pluginIter != m_plugins.end() )
         {
-            IPluggable* lp_plugin = (*l_pluginIter);
-
-            if ( lp_plugin->getId() == a_id )
-            {
-                //Plugin found. Set the flag
-                apr_plugin = lp_plugin;
-                l_ret = true;                
-            }
-
-            ++l_pluginIter;
+            apr_plugin = (*l_pluginIter);
+            l_ret = true;                
         }
         
         return l_ret;
@@ -271,30 +339,35 @@ namespace framework
     //-----------------------------------------------------------------------//
     CPluginLoader::~CPluginLoader()
     {
-        tPluginVector::iterator l_pluginIter = m_plugins.begin();
+        tPluginSet::iterator l_pluginIter;
+        IPluggable* lp_plugin = NULL;
+
+        l_pluginIter = m_plugins.begin();
 
         while ( l_pluginIter != m_plugins.end() )
         {
-            IPluggable* lp_plugin = (*l_pluginIter);
+            lp_plugin = (*l_pluginIter);
+            lp_plugin->stop ();
 
-            //Stop the plugin
-            lp_plugin->stop();
-
-            //And destroy it
             delete lp_plugin;
-        
+
             ++l_pluginIter;
         }
 
         //All plugins are destroyed
         // Now unload the libraries
         tLibraryMap::iterator l_handleIter = m_handles.begin();
+        SLoadedPlugins* lp_current = NULL;
 
         while ( l_handleIter != m_handles.end() )
         {
-            void* lp_handle = reinterpret_cast<void*>(l_handleIter->second);
+            lp_current = l_handleIter->second;
+
+            void* lp_handle = (void *)(lp_current->m_handle);
         
             dlclose ( lp_handle );
+
+            delete lp_current;
 
             ++l_handleIter;
         }
@@ -317,18 +390,19 @@ namespace framework
     void CPluginLoader::updatePlugins()
     {
         IPluggable* lp_glmanager = NULL;
-        getPlugin (  CGLManager::GL_MANAGER_ID, lp_glmanager );
+        getPlugin (  CGLManager::GL_MANAGER_ID, 0, lp_glmanager );
 
         float l_elapsedSeconds = static_cast < CGLManager* >(lp_glmanager)->getElapsedTime ();
 
-        tPluginVector::iterator l_pluginIter = m_plugins.begin();
+        tPluginSet::iterator l_pluginIter;
+        IPluggable* lp_plugin = NULL;
+
+        l_pluginIter = m_plugins.begin();
 
         while ( l_pluginIter != m_plugins.end() )
         {
-            IPluggable* lp_plugin = (*l_pluginIter);
-
-            //Start the plugin
-            lp_plugin->update( l_elapsedSeconds );
+            lp_plugin = (*l_pluginIter);
+            lp_plugin->update ( l_elapsedSeconds );
 
             ++l_pluginIter;
         }

@@ -3,6 +3,7 @@
 
 #include "log4cxx/logger.h"
 #include <stdint.h>
+#include <functional>
 
 /** Forward declaration for config node **/
 namespace Json
@@ -14,6 +15,38 @@ namespace framework
 {
     class IPluggable
     {
+        public: //hash object
+
+            struct SPluggableHash
+            {
+                size_t operator() ( const IPluggable* const & ar_key ) const
+                {
+                    std::hash<uint32_t> l_hasher;
+                    return l_hasher ( ar_key->getId() );
+                }
+            };
+
+            struct SPluggableEqual
+            {
+                bool operator() ( const IPluggable* const & ar_one,
+                                  const IPluggable* const & ar_two ) const
+                {
+                    bool l_ret = false;
+
+                    if ( ar_one != ar_two )
+                    {
+                        l_ret = ar_one->getId() == ar_two->getId() &&
+                                ar_one->getInstanceId() == ar_two->getInstanceId();
+                    }
+                    else
+                    {
+                        l_ret = true;
+                    }
+
+                    return l_ret;
+                }
+            };
+
         public:
             /**
              * Constructor
@@ -62,7 +95,21 @@ namespace framework
             /**
              * Gets the ID of the object
              */
-            const uint32_t getId();
+            uint32_t getId() const;
+
+            /**
+             * Sets the instance ID
+             *
+             * @param a_instance - the id to set
+             */
+            void setInstanceId( uint32_t a_instance );
+
+            /**
+             * Gets the instance ID
+             *
+             * @return uint32_t - instance ID
+             */
+            uint32_t getInstanceId() const;
 
         protected:
     
@@ -76,7 +123,10 @@ namespace framework
             const std::string m_name;
             
             /** The plugin ID **/
-            const uint32_t m_id;
+            uint32_t m_id;
+            
+            /** The instance ID **/
+            uint32_t m_instanceId;
     };
 };
  
