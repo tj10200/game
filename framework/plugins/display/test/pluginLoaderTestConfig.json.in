@@ -24,6 +24,13 @@
             }
         },
         {
+            "library" : "${FRAMEWORK_DIR}/plugins/scenemanager/libscenemanagerplugin.so",
+            "scene_manager" :
+            {
+                "scene_db" : "${FRAMEWORK_DIR}/plugins/scenemanager/scenes.json"
+            }
+        },
+        {
             "library" : "${FRAMEWORK_DIR}/plugins/shadermanager/libshadermanagerplugin.so",
             "shader_manager" :
             {

@@ -11,7 +11,7 @@ cmake_policy ( SET CMP0015 NEW )
 include ( ${CMAKE_CURRENT_LIST_DIR}/../../../build/CMakeLists.txt )
 include ( ${EVENT_MANAGER_DIR}/CMakeLists.txt )
 include ( ${RENDERABLE_DIR}/CMakeLists.txt )
-include ( ${SHADER_MANAGER_DIR}/CMakeLists.txt )
+include ( ${SCENE_MANAGER_DIR}/CMakeLists.txt )
 
 ##
 #   Includes
@@ -28,7 +28,7 @@ include_directories (
                       ${GLSDK_GLIMG_INCLUDE_DIR}
                       ${GLSDK_GLLOAD_INCLUDE_DIR}
                       ${RENDERABLE_PLUGIN_DIR}
-                      ${SHADER_MANAGER_DIR}
+                      ${SCENE_MANAGER_DIR}
                     )
 
 ## 

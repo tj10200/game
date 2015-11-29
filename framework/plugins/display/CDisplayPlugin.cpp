@@ -12,6 +12,8 @@
 #include "CPluginLoader.h"
 #include "IRenderable.h"
 #include "ShaderManagerCommon.h"
+#include "SceneManagerCommon.h"
+#include "SceneDB.h"
 
 namespace framework
 {
@@ -90,21 +92,6 @@ namespace framework
 
         if ( true == l_ret )
         {
-            if ( false == l_displayNode.isMember ( "renderable_plugin" ) )
-            {
-                LOG4CXX_ERROR ( m_logger, "Unable to load renderable plugin used in display" );
-                l_ret = false;
-            }
-            else
-            {
-                framework::CPluginLoader* lp_loader = CPluginLoader::getInstance();
-                lp_loader->createPlugin ( l_displayNode["renderable_plugin"].asString(),
-                                          gp_renderable );
-            }   
-        }
-        
-        if ( true == l_ret )
-        {
             mp_renderEvent = new CEvent ( RENDER_SHADER_EVENT );
         }
 
@@ -121,27 +108,21 @@ namespace framework
             }
         }
 
-
         return l_ret;
     }
 
     //-----------------------------------------------------------------------//
     void CDisplayPlugin::start()
     {
-        gp_renderable->start();
 
-        tShaderRegistrationEvent l_shaderEvent;
-        l_shaderEvent.first = m_shaderName;
-        l_shaderEvent.second = this;
-
-        CEvent l_registerShader ( REGISTER_SHADER_EVENT );
+        CEvent l_registerScene ( REGISTER_SCENE_EVENT );
         CEvent l_captureProgram ( CAPTURE_PROGRAM_HANDLE_EVENT );
         CEvent l_captureUniform ( CAPTURE_UNIFORM_HANDLE_EVENT );
 
-        //First load and compile the shader
-        CEventManager::sGetInstance()->publishEvent ( &l_registerShader, (void*)(&l_shaderEvent) );
+        //Load the scene
+        CEventManager::sGetInstance()->publishEvent ( &l_registerScene, (void*)(&MAIN_WINDOW_SCENE) );
 
-        //Get the program id from the shader manader
+        //Get the program id from the shader manager
         SShaderProgramData l_programId;
         l_programId.m_name = m_shaderName;
         CEventManager::sGetInstance()->publishEvent ( &l_captureProgram, (void*)(&l_programId) );
@@ -172,7 +153,7 @@ namespace framework
     //-----------------------------------------------------------------------//
     void CDisplayPlugin::displayCallback ( void* ap_data )
     {
-        glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+        glClearColor(0.2f, 0.4f, 0.7f, 0.0f);
         glClear(GL_COLOR_BUFFER_BIT);
 
         CEventManager::sGetInstance()->publishEvent ( mp_renderEvent, NULL );
@@ -199,7 +180,6 @@ namespace framework
     void CDisplayPlugin::render()
     {
         glUniform1f ( m_windowSizeUniform, m_windowSize );
-        static_cast<IRenderable*>(gp_renderable)->render();
     }
 
     //-----------------------------------------------------------------------//

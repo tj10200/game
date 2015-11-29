@@ -348,7 +348,6 @@ namespace framework
         glutKeyboardFunc(sKeyboardFunction);
         glutCloseFunc(sCloseFunction); 
         glutIdleFunc(sIdleFunction); 
-
     }
 
     //-----------------------------------------------------------------------//
@@ -359,6 +358,7 @@ namespace framework
         if ( NULL != lp_global )
         {
             lp_global->displayFunction();
+
         }
     }
 
@@ -487,7 +487,7 @@ namespace framework
 
         if ( NULL == lsp_return )
         {
-            lsp_loader->getPlugin ( GL_MANAGER_ID, lsp_return );
+            lsp_loader->getPlugin ( GL_MANAGER_ID, 0, lsp_return );
         }
 
         return static_cast<CGLManager*>(lsp_return);

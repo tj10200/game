@@ -14,6 +14,7 @@ include ( ${GL_MANAGER_DIR}/CMakeLists.txt )
 include ( ${KEYBOARD_PLUGIN_DIR}/CMakeLists.txt )
 include ( ${RENDERABLE_PLUGINS_DIR}/CMakeLists.txt )
 include ( ${SHADER_MANAGER_DIR}/CMakeLists.txt )
+include ( ${SCENE_MANAGER_DIR}/CMakeLists.txt )
 
 ##
 # Config files

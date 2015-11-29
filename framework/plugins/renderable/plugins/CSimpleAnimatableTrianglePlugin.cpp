@@ -52,12 +52,13 @@ namespace framework
     void CSimpleAnimatableTrianglePlugin::update( const float& ar_elapsedSeconds )
     {
         static float ls_updateAmount = 0.05f;
+        static const uint32_t ls_updateTimeAbsolute = 33.0f / 1000.0f; // Update every 33ms
         static uint32_t ls_updateTimeUs = 33.0f / 1000.0f; // Update every 33ms
         static timespec ls_lastTime = {0,0};
-        static float ls_maxAmount = 5.0f;
+        static float ls_maxAmount = 2.0f;
         static float ls_direction = 1.0f;
 
-        if ( ( ar_elapsedSeconds - ls_updateTimeUs ) >= ls_updateTimeUs )
+        if ( ( ar_elapsedSeconds - ls_updateTimeUs ) >= ls_updateTimeAbsolute )
         {
             if ( ms_vertexData[0] >= ls_maxAmount ||
                  ms_vertexData[0] <= 0 )

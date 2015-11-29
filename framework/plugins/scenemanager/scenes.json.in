@@ -1,0 +1,18 @@
+{
+    "scenes" :
+    [
+        {
+            "scene_name" : "simpleScene",
+            "scene_num" : 0,
+            "renderables" :
+            [
+                "@RENDERABLE_PLUGINS_DIR@/libsimpleanimatabletriangleplugin.so"
+            ],
+            "shader_program" : 
+            {
+                "shader_num" : 0,
+                "shader_name" : "simpleShader"
+            }
+        }
+    ]
+}
