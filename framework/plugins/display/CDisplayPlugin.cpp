@@ -114,13 +114,21 @@ namespace framework
     //-----------------------------------------------------------------------//
     void CDisplayPlugin::start()
     {
-
         CEvent l_registerScene ( REGISTER_SCENE_EVENT );
         CEvent l_captureProgram ( CAPTURE_PROGRAM_HANDLE_EVENT );
         CEvent l_captureUniform ( CAPTURE_UNIFORM_HANDLE_EVENT );
 
         //Load the scene
         CEventManager::sGetInstance()->publishEvent ( &l_registerScene, (void*)(&MAIN_WINDOW_SCENE) );
+
+        //Register ourselves with the main window shader too
+        tShaderRegistrationEvent l_shaderEvent;
+        l_shaderEvent.first = m_shaderName;
+        l_shaderEvent.second = this;
+             
+        CEvent l_registerShader ( REGISTER_SHADER_EVENT );
+        CEventManager::sGetInstance()->publishEvent ( &l_registerShader, (void*)(&l_shaderEvent) );
+
 
         //Get the program id from the shader manager
         SShaderProgramData l_programId;
